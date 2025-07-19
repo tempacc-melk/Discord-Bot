@@ -1,5 +1,4 @@
 # Custom Files
-**/Icons
-**/Infos
-*.png
-*.txt
+**/Assets/*.png
+/Infos/settings.json
+/Infos/*.info

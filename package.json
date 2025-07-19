@@ -1,0 +1,11 @@
+{
+  "name": "scarlet",
+  "version": "0.3.0",
+  "description": "The mod is checking all messages (write, update & delete) and allows the use of commands.",
+  "main": "index.js",
+  "author": "Melina Kotschetkow",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^14.15.2"
+  }
+}
