@@ -506,8 +506,9 @@ function CheckMessageForLinks (message) {
 	const checkForLink = ["http:", "https:", "www."]
 	const regex = new RegExp(checkForLink.join( "|" ), "i");
 
-	deletedMsg.add(message.id)
-	return regex.test(message)
+	const checked = regex.test(message)
+	if (checked) deletedMsg.add(message.id)
+	return checked
 }
 
 // Create a log message in a certain channel

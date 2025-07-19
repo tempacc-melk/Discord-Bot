@@ -11,8 +11,7 @@ const guildLogo = new AttachmentBuilder('./Assets/GuildLogo.png', {
 function generateEmbed (stitle, sauthor, msg) {
     const innerEmbed = new EmbedBuilder()
         .setColor(0x003366)
-        .setAuthor(
-            { name: sauthor, iconURL: `attachment://${modLogo.name}` })
+        .setAuthor({ name: sauthor, iconURL: `attachment://${modLogo.name}` })
         .setThumbnail(`attachment://${guildLogo.name}` )
         .addFields({ name: stitle, value: msg })
         .setTimestamp()
