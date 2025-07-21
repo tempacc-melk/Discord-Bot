@@ -19,11 +19,12 @@ const channelUserTimeout = JSON.parse(jsonData)['user-timeout-channel']
 const channelUserBan = JSON.parse(jsonData)['user-ban-channel']
 // #endregion
 // #region Roles
+const adminRole = JSON.parse(jsonData)['admin-role-id']
+const roleMember = JSON.parse(jsonData)['member-role']
 const rulesAccepted = JSON.parse(jsonData)['rules-accepted-role']
 const rulesDenied = JSON.parse(jsonData)['rules-denied-role']
 const roleEnglish = JSON.parse(jsonData)['en-role']
 const roleGerman = JSON.parse(jsonData)['de-role']
-const roleMember = JSON.parse(jsonData)['member-role']
 // #endregion
 const { generateEmbed, guildLogo, modLogo } = require('./Src/embeds.js')
 const deletedMsg = new Set()
@@ -302,7 +303,7 @@ client.on("interactionCreate", async (interaction) => {
 
 			// Admin area
 			case "rulesbutton":
-				if (!interaction.member.roles.highest) {
+				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
 						content: "Only the admin can use this function.", 
 						ephemeral: true
@@ -345,7 +346,7 @@ client.on("interactionCreate", async (interaction) => {
 				await interaction.reply({ content: "Rules buttons have been added", ephemeral: true})
 			break
 			case "rulesbutton2":
-				if (!interaction.member.roles.highest) {
+				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
 						content: "Only the admin can use this function.", 
 						ephemeral: true
@@ -382,7 +383,7 @@ client.on("interactionCreate", async (interaction) => {
 				})
 			break
 			case "requestplayerbutton":
-				if (!interaction.member.roles.highest) {
+				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
 						content: "Only the admin can use this function.", 
 						ephemeral: true
@@ -396,7 +397,7 @@ client.on("interactionCreate", async (interaction) => {
 
 			break
 			case "postmessage":
-				if (!interaction.member.roles.highest) {
+				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
 						content: "Only the admin can use this function.", 
 						ephemeral: true
@@ -417,7 +418,7 @@ client.on("interactionCreate", async (interaction) => {
 				})
 			break
 			case "purgeclean":
-				if (!interaction.member.roles.highest) {
+				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
 						content: "Only the admin can use this function.", 
 						ephemeral: true
