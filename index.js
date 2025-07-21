@@ -82,8 +82,8 @@ client.on("interactionCreate", async (interaction) => {
 
 		switch (interaction.commandName) {
 			// Moderator area
+			// needs to be re-written
 			case "rules":
-				// needs to be re-written
 				await castLog (`<@${getMod.id}> has used /rules in <#${lUserChannel}>`, 0)
 
 				const ruleslanguage = await interaction.options.getString("language")
@@ -138,7 +138,7 @@ client.on("interactionCreate", async (interaction) => {
 				if (lDuration > 0) {
 					await client.channels.cache.get(lChannel).setRateLimitPerUser(lDuration)
 					await interaction.reply({ 
-						content: `Slow-mode enabled in channel: <#${lChannel}> for ${lDuration} seconds`, 
+						content: `Slow-mode enabled in channel: <#${lChannel}> for ${lDuration} seconds.`, 
 						ephemeral: true 
 					})
 				} else {
@@ -148,25 +148,13 @@ client.on("interactionCreate", async (interaction) => {
 						ephemeral: true 
 					})
 				}
-				
 			break
+			// empty so far
 			case "purge":
-				
-			break
-			case "purgeclean":
-				const pcCount = await interaction.options.getString("count")
-				try {
-					await interaction.channel.bulkDelete(pcCount)
-					await interaction.reply({ 
-						content: `Deleted messages: ${pcCount}`, 
-						ephemeral: true 
-					})
-				} catch (error) {
-					await interaction.reply({ 
-						content: `Error during purgeclean`, 
-						ephemeral: true 
-					})
-				}
+				await interaction.reply({ 
+					content: `Placeholder`, 
+					ephemeral: true 
+				})
 			break
 			case "timeout":
 				await castLog (`<@${getMod.id}> has used /timeout in <#${lUserChannel}>`, 0)
@@ -196,9 +184,9 @@ client.on("interactionCreate", async (interaction) => {
 						await tUser.send(`Server: ${interaction.guild.name}\nYou received a timeout for: ${lDuration} ${lFormat}\nReason: ${lReason}`)
 						await tUser.timeout(calculatedTime, lReason)
 					} catch (error) {
-						console.log(error)
+						const timer = new Date()
 						return await interaction.reply({ 
-							content: `Error during timeout\n${started.toLocaleDateString()} ${started.toLocaleTimeString()}`, 
+							content: `Error during timeout\n${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}`, 
 							ephemeral: true 
 						})						
 					}
@@ -219,8 +207,9 @@ client.on("interactionCreate", async (interaction) => {
 					await kUser.send(kUser, `Server: ${interaction.guild.name}\nYou recieved a kick from this server\nReason:${kReason}`)
 					await kUser.kick()
 				} catch (error) {
+					const timer = new Date()
 					return await interaction.reply({ 
-						content: `User doesn't exit on this server. ${started.toLocaleDateString()} ${started.toLocaleTimeString()}`, 
+						content: `User doesn't exit on this server. ${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}`, 
 						ephemeral: true 
 					})				
 				}
@@ -240,8 +229,9 @@ client.on("interactionCreate", async (interaction) => {
 					await bUser.send(bUser, `Server: ${interaction.guild.name}\nYou received a ban.\nReason: ${bReason}`)
 					await bUser.ban( { reason: bReason })
 				} catch (error) {
+					const timer = new Date()
 					return await interaction.reply({ 
-						content: `User doesn't exist on this server. ${started.toLocaleDateString()} ${started.toLocaleTimeString()}`, 
+						content: `User doesn't exist on this server. ${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}`, 
 						ephemeral: true 
 					})
 				}
@@ -425,6 +415,29 @@ client.on("interactionCreate", async (interaction) => {
 					content: "Message has been written.", 
 					ephemeral: true
 				})
+			break
+			case "purgeclean":
+				if (!interaction.member.roles.highest) {
+					return await interaction.reply({ 
+						content: "Only the admin can use this function.", 
+						ephemeral: true
+					})
+				}
+
+				const pcCount = await interaction.options.getString("count")
+				try {
+					await interaction.channel.bulkDelete(pcCount)
+					await interaction.reply({ 
+						content: `Deleted messages: ${pcCount}`, 
+						ephemeral: true 
+					})
+				} catch (error) {
+					const timer = new Date()
+					await interaction.reply({ 
+						content: `Error during purgeclean. ${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}`, 
+						ephemeral: true 
+					})
+				}
 			break
 		}
     }
