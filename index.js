@@ -4,6 +4,7 @@ const client = new Client({
 		partials: [Partials.GuildMember, Partials.Channel, Partials.Message, Partials.Reaction]
 	})
 const fs = require('fs')
+
 const jsonData = fs.readFileSync ('./Infos/settings.json')
 // #region Bot Information
 const botToken = JSON.parse(jsonData)['botToken']
@@ -26,7 +27,7 @@ const rulesDenied = JSON.parse(jsonData)['rules-denied-role']
 const roleEnglish = JSON.parse(jsonData)['en-role']
 const roleGerman = JSON.parse(jsonData)['de-role']
 // #endregion
-const { generateEmbed, guildLogo, modLogo } = require('./Src/embeds.js')
+const { generateEmbed, guildLogo, guildImage } = require('./Src/embeds.js')
 const deletedMsg = new Set()
 // =================================================================================================== //
 try {
@@ -75,9 +76,10 @@ client.on("messageDelete", async (message) => {
 	return await castLog (`User: <${message.author}> deleted a message, see below.\nMessage: ${message.content}`, 2)
 })
 
-// Check for commands
+// Check if a interaction has been created
 client.on("interactionCreate", async (interaction) => {
-    if(interaction.isCommand ()) {
+    // Check if the interaction is a command
+	if(interaction.isCommand ()) {
 		const getMod = interaction.member
 		const lUserChannel = interaction.channel.id
 
@@ -189,7 +191,7 @@ client.on("interactionCreate", async (interaction) => {
 						return await interaction.reply({ 
 							content: `Error during timeout\n${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}`, 
 							ephemeral: true 
-						})						
+						})
 					}
 					await interaction.reply({ 
 						content: `User has recieved a timeout`, 
@@ -298,9 +300,8 @@ client.on("interactionCreate", async (interaction) => {
 						})
 					}
 				}
-
 			break
-
+			
 			// Admin area
 			case "rulesbutton":
 				if (!interaction.member.roles.cache.has(adminRole)) {
@@ -403,14 +404,19 @@ client.on("interactionCreate", async (interaction) => {
 						ephemeral: true
 					})
 				}
-
-				const pmheadline = interaction.options.getString("headline")
-				const pmname = "Bot name"
-				const pmmsg = interaction.options.getString("message")
-
-				await client.channels.cache.get(`${interaction.options.getString("channel")}`).send({
-					embeds: [generateEmbed(pmheadline, pmname, pmmsg)],
-					files: [guildLogo, modLogo]
+				
+				const pmheadline = await interaction.options.getString("headline")
+				const pmmsg = await interaction.options.getString("message")
+				const pmsendimg = await interaction.options.getString("image")
+				const pmcal = await interaction.options.getBoolean("calender")
+				const pmstart = await interaction.options.getString("startdate")
+				const pmend = await interaction.options.getString("enddate")
+				const filesToSend = [guildLogo]
+				if (pmsendimg != null) filesToSend.push(guildImage)
+				
+				await client.channels.cache.get(lUserChannel).send({
+					embeds: [generateEmbed(pmheadline, pmmsg, pmsendimg, {pmcal, pmstart, pmend})],
+					files: filesToSend
 				})
 				await interaction.reply({ 
 					content: "Message has been written.", 
@@ -442,7 +448,7 @@ client.on("interactionCreate", async (interaction) => {
 			break
 		}
     }
-	// Check if a button has been pressed
+	// Check if the interaction is a button
 	if (interaction.isButton()) {
 		const lBtn = interaction.customId
 		const lUser = interaction.member

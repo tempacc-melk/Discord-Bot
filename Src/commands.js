@@ -1,5 +1,6 @@
 const { REST, Routes, SlashCommandBuilder } = require("discord.js")
 const fs = require('fs');
+
 const jsonData = fs.readFileSync ('./Infos/settings.json')
 const botToken = JSON.parse(jsonData)['botToken']
 const botID = JSON.parse(jsonData)['botID']
@@ -231,6 +232,26 @@ const cmds = async () => {
                     option.setName("message")
                     .setDescription("What should the bot write for you")
                     .setRequired(true)
+                )
+                .addStringOption(option =>
+                    option.setName("image")
+                    .setDescription("Add Image to the embed message")
+                    .setRequired(false)
+                )
+                .addBooleanOption(option =>
+                    option.setName("calender")
+                    .setDescription("Add Calender to the embed message")
+                    .setRequired(false)
+                )
+                .addStringOption(option =>
+                    option.setName("startdate")
+                    .setDescription("Set a start time for a event (Insert TIMESTAMP) [wip]")
+                    .setRequired(false)
+                )
+                .addStringOption(option =>
+                    option.setName("enddate")
+                    .setDescription("Set a end time for a event( Insert TIMESTAMP) [wip]")
+                    .setRequired(false)
                 ),
                 // #endregion
             ]
