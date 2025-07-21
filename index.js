@@ -12,7 +12,7 @@ const botID = JSON.parse(jsonData)['botID']
 // #region Channels
 const channelEN = JSON.parse(jsonData)['channel-en-id']
 const channelDE = JSON.parse(jsonData)['channel-de-id']
-const channelLog = JSON.parse(jsonData)['log-Channel']
+const channelLog = JSON.parse(jsonData)['log-channel']
 const channelMsgEdit = JSON.parse(jsonData)['msg-edit-channel']
 const channelMsgDel = JSON.parse(jsonData)['msg-del-channel']
 const channelUserTimeout = JSON.parse(jsonData)['user-timeout-channel']
@@ -44,6 +44,7 @@ client.on("messageCreate", async (message) => {
 	if (message.author.bot) return
 	//if (message.member.permissions.has ("Administrator"|"Moderator")) return
 	const getMsg = message.content
+
 	if (getMsg.startsWith('/')) {
 		await castLog (`Mod: <@${botID}> deleted a message, see below.\nUser: <@${message.author.id}>\nMessage: ${getMsg}`, 2)
 		deletedMsg.add(message.id)
@@ -69,29 +70,28 @@ client.on("messageDelete", async (message) => {
 	if (deletedMsg.has(message.id)) {
 		return deletedMsg.delete(message.id)
 	}
-
-	const target = message.author
-	//return await castLog (`User: <@${target}> deleted a message, see below.\nMessage: ${message.content}`, 2)
-	return await castLog (`User: <${target}> deleted a message, see below.\nMessage: ${message.content}`, 2)
+	
+	return await castLog (`User: <${message.author}> deleted a message, see below.\nMessage: ${message.content}`, 2)
 })
 
 // Check for commands
 client.on("interactionCreate", async (interaction) => {
     if(interaction.isCommand ()) {
-		const getMod = interaction.member.user
+		const getMod = interaction.member
 		const lUserChannel = interaction.channel.id
 
 		switch (interaction.commandName) {
 			// Moderator area
 			case "rules":
+				// needs to be re-written
 				await castLog (`<@${getMod.id}> has used /rules in <#${lUserChannel}>`, 0)
 
-				const ruleslanguage = interaction.options.getString("language")
+				const ruleslanguage = await interaction.options.getString("language")
 				const rulesEN = fs.readFileSync('Infos/rules-en.info').toString().split('\n')
 				const rulesDE = fs.readFileSync('Infos/rules-de.info').toString().split('\n')
 				
-				const rulesNumber = parseInt(interaction.options.getString("number"))
-				const rulesPoint = parseInt(interaction.options.getString("point"))
+				const rulesNumber = parseInt(await interaction.options.getString("number"))
+				const rulesPoint = parseInt(await interaction.options.getString("point"))
 				const getPointLine = rulesNumber+rulesPoint
 				
 				if (ruleslanguage === "en") {
@@ -131,22 +131,22 @@ client.on("interactionCreate", async (interaction) => {
 
 			break
 			case "slow-mode":
-				const lChannel = interaction.options.getString("channel")
-				const lDuration = interaction.options.getString("duration")
+				const lChannel = await interaction.options.getString("channel")
+				const lDuration = await interaction.options.getString("duration")
 				await castLog (`<@${getMod.id}> has used /slow-mode <#${lChannel}>, duration: ${lDuration} (seconds)`, 0)
 
 				if (lDuration > 0) {
+					await client.channels.cache.get(lChannel).setRateLimitPerUser(lDuration)
 					await interaction.reply({ 
 						content: `Slow-mode enabled in channel: <#${lChannel}> for ${lDuration} seconds`, 
 						ephemeral: true 
 					})
-					client.channels.cache.get(lChannel).setRateLimitPerUser(lDuration)
 				} else {
+					await client.channels.cache.get(lChannel).setRateLimitPerUser(0)
 					await interaction.reply({ 
 						content: `Slow-mode disabled in channel: <#${lChannel}>`, 
 						ephemeral: true 
 					})
-					client.channels.cache.get(lChannel).setRateLimitPerUser(0)
 				}
 				
 			break
@@ -154,7 +154,7 @@ client.on("interactionCreate", async (interaction) => {
 				
 			break
 			case "purgeclean":
-				const pcCount = interaction.options.getString("count")
+				const pcCount = await interaction.options.getString("count")
 				try {
 					await interaction.channel.bulkDelete(pcCount)
 					await interaction.reply({ 
@@ -163,60 +163,99 @@ client.on("interactionCreate", async (interaction) => {
 					})
 				} catch (error) {
 					await interaction.reply({ 
-						content: `Error during purgeclean: ${pcCount}`, 
+						content: `Error during purgeclean`, 
 						ephemeral: true 
 					})
 				}
 			break
 			case "timeout":
-				await castLog (`<@${getMod.id}> has used /timeout`, 0)
-				
-				const tUser = interaction.options.getUser("user")
-				if (!CheckRoles(interaction.member, tUser)) {
+				await castLog (`<@${getMod.id}> has used /timeout in <#${lUserChannel}>`, 0)
+				const tUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
+				const crID = CheckRoles(getMod, tUser)
+				if(!crID) {
 					return await interaction.reply({ 
 						content: `You cannot timeout a user with the same or higher position then yours.`, 
 						ephemeral: true 
 					})
 				} else {
-					const lDuration = interaction.options.getInteger("duration")
-					const lFormat = interaction.options.getString("format")
-					const lReason = interaction.options.getString("reason")
-					//const lServerIcon = interaction.guild.icon;
+					const lDuration = await interaction.options.getInteger("duration")
+					const lFormat = await interaction.options.getString("format")
+					const lReason = await interaction.options.getString("reason")
+					let calculatedTime = 1000
+					switch (lFormat) {
+						case "days":
+							calculatedTime *= 24
+						case "hour":
+							calculatedTime *= 60
+						case "min":
+							calculatedTime *= 60
+						break
+					}
+					
+					try {
+						await tUser.send(`Server: ${interaction.guild.name}\nYou received a timeout for: ${lDuration} ${lFormat}\nReason: ${lReason}`)
+						await tUser.timeout(calculatedTime, lReason)
+					} catch (error) {
+						console.log(error)
+						return await interaction.reply({ 
+							content: `Error during timeout\n${started.toLocaleDateString()} ${started.toLocaleTimeString()}`, 
+							ephemeral: true 
+						})						
+					}
 					await interaction.reply({ 
-						content: `User ${tUser}` + ` | Timeout time: ${lDuration} ${lFormat} | Reason: ${lReason}`, 
+						content: `User has recieved a timeout`, 
 						ephemeral: true 
 					})
-					
-					client.users.send(tUser, `Server: ${interaction.guild.name}\nYou received a timeout for: ${lDuration} ${lFormat}\nReason: ${lReason}`)
-					tUser.timeout(ms(10), lReason)
-
-					await castLog (`${tUser} received a timeout from <@${getMod.id}> for ${lDuration} ${lFormat} for ${lReason}`, 3)
+					await castLog (`${tUser} received a timeout from <@${getMod.id}>\nTime: ${lDuration} ${lFormat}\nReason: ${lReason}`, 3)
 				}
 			break
 			case "kick":
-				await castLog (`Mod: <@${getMod.id}> has used /kick`, 0)
+				await castLog (`<@${getMod.id}> has used /kick`, 0)
 
-				const kUser = interaction.options.getUser("user")
+				const kUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
+				const kReason = await interaction.options.getString("reason")
+
+				try {
+					await kUser.send(kUser, `Server: ${interaction.guild.name}\nYou recieved a kick from this server\nReason:${kReason}`)
+					await kUser.kick()
+				} catch (error) {
+					return await interaction.reply({ 
+						content: `User doesn't exit on this server. ${started.toLocaleDateString()} ${started.toLocaleTimeString()}`, 
+						ephemeral: true 
+					})				
+				}
+				
 				await interaction.reply({ 
-					content: `Kicked user: ${kUser} [wip]`, 
+					content: `Kicked user: ${kUser}`, 
 					ephemeral: true 
 				})
-				await interaction.member.fetch(kUser.id).then(kUser => kUser.kick())
-
 			break
 			case "ban":
-				await castLog (`Mod: <@${getMod}> has used /ban`, 0)
+				await castLog (`<@${getMod.id}> has used /ban`, 0)
 
-				const bUser = interaction.options.getUser("user")
+				const bUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
+				const bReason = await interaction.options.getString("reason")
+
+				try {
+					await bUser.send(bUser, `Server: ${interaction.guild.name}\nYou received a ban.\nReason: ${bReason}`)
+					await bUser.ban( { reason: bReason })
+				} catch (error) {
+					return await interaction.reply({ 
+						content: `User doesn't exist on this server. ${started.toLocaleDateString()} ${started.toLocaleTimeString()}`, 
+						ephemeral: true 
+					})
+				}
 				await interaction.reply({ 
-					content: `Banned user: ${bUser} [wip]`, 
+					content: `Banned user: ${bUser}`, 
 					ephemeral: true 
 				})
+				await castLog (`${bUser} received a ban from <@${getMod.id}>\nReason:${bReason}`, 4)
+
 			break
 			case "delete":
 				await castLog (`<@${getMod.id}> has used /delete`, 0)
 
-				const getMsgID = interaction.options.getString("msgid")
+				const getMsgID = await interaction.options.getString("msgid")
 				const eaID = getMsgID.split('-')
 				try {
 					const channel = interaction.client.channels.cache.get(eaID[0])
@@ -257,7 +296,7 @@ client.on("interactionCreate", async (interaction) => {
 					await interaction.reply({ 
 						content: "Message has been deleted.", 
 						ephemeral: true 
-					});
+					})
 
 				} catch (error) {
 					console.error("Error during deletion:", error)
@@ -302,10 +341,16 @@ client.on("interactionCreate", async (interaction) => {
 				.setEmoji("✖")
 
 				const row = new ActionRowBuilder ()
-				.addComponents(confirm,cancel);
+				.addComponents(confirm,cancel)
 
-				if (rChannel === "en") client.channels.cache.get('1237866586136645652').send({content: lMsg, components: [row]});
-				if (rChannel === "de") client.channels.cache.get('1241030993759043585').send({content: lMsg, components: [row]});
+				if (rChannel === "en") client.channels.cache.get(channelEN).send({
+					content: lMsg, 
+					components: [row]
+				})
+				if (rChannel === "de") client.channels.cache.get(channelDE).send({
+					content: lMsg, 
+					components: [row]
+				})
 
 				await interaction.reply({ content: "Rules buttons have been added", ephemeral: true})
 			break
@@ -330,10 +375,16 @@ client.on("interactionCreate", async (interaction) => {
 				.setStyle(ButtonStyle.Secondary)
 	
 				const row2 = new ActionRowBuilder ()
-				.addComponents(english,german);
+				.addComponents(english,german)
 	
-				if (rChannel2 === "en") client.channels.cache.get('1237866586136645652').send({content: lMsg2, components: [row2]});
-				if (rChannel2 === "de") client.channels.cache.get('1241030993759043585').send({content: lMsg2, components: [row2]});
+				if (rChannel2 === "en") client.channels.cache.get(channelEN).send({
+					content: lMsg2, 
+					components: [row2]
+				})
+				if (rChannel2 === "de") client.channels.cache.get(channelDE).send({
+					content: lMsg2, 
+					components: [row2]
+				})
 
 				await interaction.reply({ 
 					content: "Language buttons have been added", 
@@ -361,9 +412,11 @@ client.on("interactionCreate", async (interaction) => {
 						ephemeral: true
 					})
 				}
+
 				const pmheadline = interaction.options.getString("headline")
 				const pmname = "Bot name"
 				const pmmsg = interaction.options.getString("message")
+
 				await client.channels.cache.get(`${interaction.options.getString("channel")}`).send({
 					embeds: [generateEmbed(pmheadline, pmname, pmmsg)],
 					files: [guildLogo, modLogo]
@@ -493,9 +546,9 @@ client.on("interactionCreate", async (interaction) => {
 
 // Check if the userRole (Moderator) and the targetRole
 // if the userRole is the owner return true
-// if the userRole position is higher then targetRole return true
+// if the userRole position is higher then targetRole return false
 function CheckRoles (userRole, targetRole) {
-	if (userRole.id === userRole.guild.ownerID) return true
+	if (userRole === userRole.guild.ownerId) return false
 	return userRole.roles.highest.position > targetRole.roles.highest.position
 }
 
@@ -504,7 +557,7 @@ function CheckRoles (userRole, targetRole) {
 // return true if RegExp has found an item from the array
 function CheckMessageForLinks (message) {
 	const checkForLink = ["http:", "https:", "www."]
-	const regex = new RegExp(checkForLink.join( "|" ), "i");
+	const regex = new RegExp(checkForLink.join( "|" ), "i")
 
 	const checked = regex.test(message)
 	if (checked) deletedMsg.add(message.id)
@@ -516,22 +569,22 @@ function CheckMessageForLinks (message) {
 async function castLog (content, type) {
 	// 0 cmd-log | Hidden channel -> Only visible to owner
 	if (type === 0) {
-		client.channels.cache.get(channelLog).send(content);
+		client.channels.cache.get(channelLog).send(content)
 	}
 	// 1 msg-edit
 	if (type === 1) {
-		client.channels.cache.get(channelMsgEdit).send(content);
+		client.channels.cache.get(channelMsgEdit).send(content)
 	}
 	// 2 msg-del
 	if (type === 2) {
-		client.channels.cache.get(channelMsgDel).send({content});
+		client.channels.cache.get(channelMsgDel).send(content)
 	}
 	// 3 user-timeout
 	if (type === 3) {
-		client.channels.cache.get(channelUserTimeout).send(content);
+		client.channels.cache.get(channelUserTimeout).send(content)
 	}
 	// 4 user-ban
 	if (type === 4) {
-		client.channels.cache.get(channelUserBan).send(content);
+		client.channels.cache.get(channelUserBan).send(content)
 	}
 }

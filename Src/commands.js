@@ -67,8 +67,8 @@ const cmds = async () => {
                 new SlashCommandBuilder()
                 .setName("timeout")
                 .setDescription("Timeout a user from all text and voice channels.")
-                .addUserOption(option => 
-                    option.setName("user")
+                .addStringOption(option => 
+                    option.setName("userid")
                     .setDescription("Username of the person to timeout")
                     .setRequired(true)
                 )
@@ -99,9 +99,14 @@ const cmds = async () => {
                 new SlashCommandBuilder()
                 .setName("kick")
                 .setDescription("Kick the user from the server")
-                .addUserOption(option =>
-                    option.setName("user")
+                .addStringOption(option =>
+                    option.setName("userid")
                     .setDescription("Username of the person to be kicked")
+                    .setRequired(true)
+                )
+                .addStringOption(option =>
+                    option.setName("reason")
+                    .setDescription("Add a reason for the kick")
                     .setRequired(true)
                 ),
                 // #endregion
@@ -112,6 +117,21 @@ const cmds = async () => {
                 .addStringOption(option =>
                     option.setName("msgid")
                     .setDescription("Insert the message id here")
+                    .setRequired(true)
+                ),
+                // #endregion
+                // #region Ban a user
+                new SlashCommandBuilder()
+                .setName("ban")
+                .setDescription("Ban a person from this server")
+                .addStringOption(option =>
+                    option.setName("userid")
+                    .setDescription("Insert their user ID here")
+                    .setRequired(true)
+                )
+                .addStringOption(option =>
+                    option.setName("reason")
+                    .setDescription("What is the reason for banning this person?")
                     .setRequired(true)
                 ),
                 // #endregion
