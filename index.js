@@ -152,8 +152,10 @@ client.on("interactionCreate", async (interaction) => {
 					})
 				}
 			break
-			// empty so far
+			// [wip]
 			case "purge":
+				await castLog (`<@${getMod.id}> has used /purge in <#${lUserChannel}>`, 0)
+
 				await interaction.reply({ 
 					content: `Placeholder`, 
 					ephemeral: true 
@@ -162,8 +164,8 @@ client.on("interactionCreate", async (interaction) => {
 			case "timeout":
 				await castLog (`<@${getMod.id}> has used /timeout in <#${lUserChannel}>`, 0)
 				const tUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
-				const crID = CheckRoles(getMod, tUser)
-				if(!crID) {
+				const tcrID = CheckRoles(getMod, tUser)
+				if(!tcrID) {
 					return await interaction.reply({ 
 						content: `You cannot timeout a user with the same or higher position then yours.`, 
 						ephemeral: true 
@@ -189,7 +191,7 @@ client.on("interactionCreate", async (interaction) => {
 					} catch (error) {
 						const timer = new Date()
 						return await interaction.reply({ 
-							content: `Error during timeout\n${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}`, 
+							content: `Error on timeout. ${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}`, 
 							ephemeral: true 
 						})
 					}
@@ -205,14 +207,20 @@ client.on("interactionCreate", async (interaction) => {
 
 				const kUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
 				const kReason = await interaction.options.getString("reason")
-
+				const kcrID = CheckRoles(getMod, kUser)
+				if (!kcrID) {
+					return interaction.reply({ 
+						content: "You cannot kick a user with the same or higher position then yours.",
+						ephemeral: true 
+					})
+				}
 				try {
 					await kUser.send(kUser, `Server: ${interaction.guild.name}\nYou recieved a kick from this server\nReason:${kReason}`)
 					await kUser.kick()
 				} catch (error) {
 					const timer = new Date()
 					return await interaction.reply({ 
-						content: `User doesn't exit on this server. ${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}`, 
+						content: `Error on kick. ${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}`, 
 						ephemeral: true 
 					})				
 				}
@@ -227,79 +235,62 @@ client.on("interactionCreate", async (interaction) => {
 
 				const bUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
 				const bReason = await interaction.options.getString("reason")
-
+				const bcrID = CheckRoles(getMod, bUser)
+				if (!bcrID) {
+					return interaction.reply({ 
+						content: "You cannot ban a user with the same or higher position then yours.",
+						ephemeral: true 
+					})
+				}
 				try {
 					await bUser.send(bUser, `Server: ${interaction.guild.name}\nYou received a ban.\nReason: ${bReason}`)
 					await bUser.ban( { reason: bReason })
 				} catch (error) {
 					const timer = new Date()
 					return await interaction.reply({ 
-						content: `User doesn't exist on this server. ${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}`, 
+						content: `Error on ban. ${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}`, 
 						ephemeral: true 
 					})
 				}
+
 				await interaction.reply({ 
 					content: `Banned user: ${bUser}`, 
 					ephemeral: true 
 				})
 				await castLog (`${bUser} received a ban from <@${getMod.id}>\nReason:${bReason}`, 4)
-
 			break
 			case "delete":
 				await castLog (`<@${getMod.id}> has used /delete`, 0)
 
 				const getMsgID = await interaction.options.getString("msgid")
 				const eaID = getMsgID.split('-')
-				try {
-					const channel = interaction.client.channels.cache.get(eaID[0])
-					if (!channel) {
-						return interaction.reply({ 
-							content: "Channel not found.", 
-							ephemeral: true 
-						})
-					}
-
-					const msg = await channel.messages.fetch(eaID[1]).catch(err => {
-						if (err.code === 10008) {
-							return null
-						}
-						throw err
-					})
-
-					if (!msg) {
-						return interaction.reply({ 
-							content: "The message doesn't exists anymore.", 
-							ephemeral: true 
-						})
-					}
-
-					const modMember = await interaction.guild.members.fetch(getMod.id)
-					const targetMember = await interaction.guild.members.fetch(msg.author.id)
-
-					if (!CheckRoles(modMember, targetMember)) {
-						return interaction.reply({ 
-							content: "The message cannot be deleted, you don't have enough permission.",
-							ephemeral: true 
-						})
-					}
-					deletedMsg.add(msg.id)
-					await msg.delete()
-
-					await castLog(`Mod: <@${getMod.id}> deleted a message from:\nUser ${msg.author}\nMessage [${msg.content}]`, 2)
-					await interaction.reply({ 
-						content: "Message has been deleted.", 
+				const channel = interaction.client.channels.cache.get(eaID[0])
+				const getMsg = await channel.messages.fetch(eaID[1])
+				const targetMember = await interaction.guild.members.fetch(getMsg.author.id)
+				const dcrID = CheckRoles(getMod, targetMember)
+				if (!dcrID) {
+					return interaction.reply({ 
+						content: "The message cannot be deleted, you don't have enough permission.",
 						ephemeral: true 
 					})
-
-				} catch (error) {
-					console.error("Error during deletion:", error)
-					if (!interaction.replied) {
-						await interaction.reply({ 
-							content: "Err during deletion", 
-							ephemeral: true 
-						})
-					}
 				}
+
+				try {
+					deletedMsg.add(getMsg.id)
+					await getMsg.delete()
+				} catch (error) {
+					const timer = new Date()
+					return await interaction.reply({ 
+						content: `Error on delete. ${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}`, 
+						ephemeral: true 
+					})
+				}
+
+				await castLog(`Mod: <@${getMod.id}> deleted a message.\nUser: ${getMsg.author}\nMessage: ${getMsg.content}`, 2)
+				await interaction.reply({ 
+					content: "Message has been deleted.", 
+					ephemeral: true 
+				})
 			break
 			
 			// Admin area
