@@ -28,7 +28,6 @@ const roleEnglish = JSON.parse(jsonData)['en-role']
 const roleGerman = JSON.parse(jsonData)['de-role']
 // #endregion
 const { generateEmbed, guildLogo, guildImage, rulesEmbed } = require('./Src/embeds.js')
-const { Readline } = require('readline/promises')
 const deletedMsg = new Set()
 // =================================================================================================== //
 try {
@@ -424,8 +423,7 @@ client.on("interactionCreate", async (interaction) => {
 				
 				const prheadline = await interaction.options.getString("headline")
 				const prlanguage = await interaction.options.getString("language")
-				const prfiles = [guildLogo]
-				if (pmsendimg != null) prfiles.push(guildImage)
+				const prfiles = [guildLogo, guildImage]
 								
 				await client.channels.cache.get(lUserChannel).send({
 					embeds: [rulesEmbed(prheadline, prlanguage)],
@@ -436,7 +434,6 @@ client.on("interactionCreate", async (interaction) => {
 					ephemeral: true
 				})
 			break
-
 			case "purgeclean":
 				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
