@@ -30,11 +30,7 @@ const roleGerman = JSON.parse(jsonData)['de-role']
 const { generateEmbed, guildLogo, guildImage, rulesEmbed } = require('./Src/embeds.js')
 const deletedMsg = new Set()
 // =================================================================================================== //
-try {
-	client.login(botToken)
-} catch (error) {
-	return console.log(`Bot login - error\n ${error}`)
-}
+client.login(botToken)
 
 if (client.isReady) {
 	const started = new Date()
@@ -73,7 +69,7 @@ client.on("messageDelete", async (message) => {
 		return deletedMsg.delete(message.id)
 	}
 	
-	return await castLog (`User: <${message.author}> deleted a message, see below.\nMessage: ${message.content}`, 2)
+	return await castLog (`User: ${message.author} deleted a message, see below.\nMessage: ${message.content}`, 2)
 })
 // Check if a interaction has been created
 client.on("interactionCreate", async (interaction) => {
@@ -84,9 +80,8 @@ client.on("interactionCreate", async (interaction) => {
 
 		switch (interaction.commandName) {
 			// Moderator area
-			// needs to be re-written
 			case "rules":
-				await castLog (`<@${getMod.id}> has used /rules in <#${lUserChannel}>`, 0)
+				await castLog (`${getMod} has used /rules in <#${lUserChannel}>`, 0)
 
 				const ruleslanguage = await interaction.options.getString("language")
 				const rulesEN = fs.readFileSync('Infos/rules-en.info').toString().split('\n')
@@ -129,27 +124,33 @@ client.on("interactionCreate", async (interaction) => {
 				})
 			break
 			case "slow-mode":
-				const lChannel = await interaction.options.getString("channel")
-				const lDuration = await interaction.options.getString("duration")
-				await castLog (`<@${getMod.id}> has used /slow-mode <#${lChannel}>, duration: ${lDuration} (seconds)`, 0)
-
-				if (lDuration > 0) {
-					await client.channels.cache.get(lChannel).setRateLimitPerUser(lDuration)
-					await interaction.reply({ 
-						content: `Slow-mode enabled in channel: <#${lChannel}> for ${lDuration} seconds.`, 
-						ephemeral: true 
-					})
-				} else {
-					await client.channels.cache.get(lChannel).setRateLimitPerUser(0)
-					await interaction.reply({ 
-						content: `Slow-mode disabled in channel: <#${lChannel}>`, 
+				const smChannel = await interaction.options.getString("channel")
+				let smDuration = await interaction.options.getInteger("duration")
+				await castLog (`${getMod} has used /slow-mode <#${smChannel}>, duration: ${smDuration} (seconds)`, 0)
+				let smOutput = ""
+				
+				try {
+					await client.channels.cache.get(smChannel).setRateLimitPerUser(smDuration)
+				} catch (error) {
+					const timer = new Date()				
+					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on slow-mode`)
+					return await interaction.reply({ 
+						content: "Something went wrong with slow-mode. :frowning2:", 
 						ephemeral: true 
 					})
 				}
+
+				if (smDuration <= 0) smOutput = `Slow-mode disabled in channel: <#${smChannel}>`
+				else smOutput= `Slow-mode enabled in channel: <#${smChannel}> for ${smDuration} seconds.`
+				
+				await interaction.reply({ 
+					content: smOutput, 
+					ephemeral: true 
+				})
 			break
 			// [wip]
 			case "purge":
-				await castLog (`<@${getMod.id}> has used /purge in <#${lUserChannel}>`, 0)
+				await castLog (`${getMod} has used /purge in <#${lUserChannel}>`, 0)
 
 				await interaction.reply({ 
 					content: `Placeholder`, 
@@ -157,8 +158,8 @@ client.on("interactionCreate", async (interaction) => {
 				})
 			break
 			case "timeout":
-				await castLog (`<@${getMod.id}> has used /timeout in <#${lUserChannel}>`, 0)
 				const tUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
+				await castLog (`${getMod} has used /timeout in <#${lUserChannel}> on ${tUser}`, 0)
 				const tcrID = CheckRoles(getMod, tUser)
 				if(!tcrID) {
 					return await interaction.reply({ 
@@ -195,13 +196,12 @@ client.on("interactionCreate", async (interaction) => {
 						content: `User has recieved a timeout`, 
 						ephemeral: true 
 					})
-					await castLog (`${tUser} received a timeout from <@${getMod.id}>\nTime: ${lDuration} ${lFormat}\nReason: ${lReason}`, 3)
+					await castLog (`${tUser} received a timeout from ${getMod}\nTime: ${lDuration} ${lFormat}\nReason: ${lReason}`, 3)
 				}
 			break
 			case "kick":
-				await castLog (`<@${getMod.id}> has used /kick`, 0)
-
 				const kUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
+				await castLog (`${getMod} has used /kick on ${kUser}`, 0)
 				const kReason = await interaction.options.getString("reason")
 				const kcrID = CheckRoles(getMod, kUser)
 				if (!kcrID) {
@@ -228,9 +228,8 @@ client.on("interactionCreate", async (interaction) => {
 				})
 			break
 			case "ban":
-				await castLog (`<@${getMod.id}> has used /ban`, 0)
-
 				const bUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
+				await castLog (`${getMod}> has used /ban on ${bUser}`, 0)
 				const bReason = await interaction.options.getString("reason")
 				const bcrID = CheckRoles(getMod, bUser)
 				if (!bcrID) {
@@ -255,10 +254,10 @@ client.on("interactionCreate", async (interaction) => {
 					content: `Banned user: ${bUser}`, 
 					ephemeral: true 
 				})
-				await castLog (`${bUser} received a ban from <@${getMod.id}>\nReason:${bReason}`, 4)
+				await castLog (`${bUser} received a ban from ${getMod}\nReason:${bReason}`, 4)
 			break
 			case "delete":
-				await castLog (`<@${getMod.id}> has used /delete`, 0)
+				await castLog (`${getMod} has used /delete`, 0)
 
 				const getMsgID = await interaction.options.getString("msgid")
 				const eaID = getMsgID.split('-')
@@ -285,7 +284,7 @@ client.on("interactionCreate", async (interaction) => {
 					})
 				}
 
-				await castLog(`Mod: <@${getMod.id}> deleted a message.\nUser: ${getMsg.author}\nMessage: ${getMsg.content}`, 2)
+				await castLog(`Mod: ${getMod} deleted a message.\nUser: ${getMsg.author}\nMessage: ${getMsg.content}`, 2)
 				await interaction.reply({ 
 					content: "Message has been deleted.", 
 					ephemeral: true 
@@ -442,13 +441,13 @@ client.on("interactionCreate", async (interaction) => {
 					})
 				}
 
-				const pcCount = await interaction.options.getString("count")
+				let pcCount = await interaction.options.getInteger("count")
+				let pcOutput = ""
 				try {
+					const lastMessages = await interaction.channel.messages.fetch({ limit: pcCount })
+					lastMessages.forEach(msg => {deletedMsg.add(msg.id) })
 					await interaction.channel.bulkDelete(pcCount)
-					await interaction.reply({ 
-						content: `Deleted messages: ${pcCount}`, 
-						ephemeral: true 
-					})
+					pcOutput = `Deleted messages: ${pcCount}` 
 				} catch (error) {
 					const timer = new Date()
 					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on purgeclean -> ${error}`)
@@ -456,8 +455,12 @@ client.on("interactionCreate", async (interaction) => {
 						content: "Something went wrong with purgeclean. :frowning2:", 
 						ephemeral: true 
 					})
-
 				}
+				
+				await interaction.reply({ 
+					content: pcOutput, 
+					ephemeral: true 
+				})
 			break
 		}
     }

@@ -56,11 +56,11 @@ const cmds = async () => {
                     .setDescription("In which channel you want to enable slow mode? Post channel id")
                     .setRequired(true)
                 )
-                .addStringOption(option =>
+                .addIntegerOption(option =>
                     option.setName("duration")
                     .setDescription("Set the duration of the slow mode (1-3 digits) in seconds (0 is off)")
-                    .setMinLength(1)
-                    .setMaxLength(3)
+                    .setMinValue(0)
+                    .setMaxValue(999)
                     .setRequired(true)
                 ),
                 // #endregion
@@ -140,11 +140,11 @@ const cmds = async () => {
                 new SlashCommandBuilder()
                 .setName("purge")
                 .setDescription("Delete multiple messages in channel")
-                .addStringOption(option =>
+                .addIntegerOption(option =>
                     option.setName("count")
                     .setDescription("How many messages do you want to delete")
-                    .setMinLength(1)
-                    .setMaxLength(3)
+                    .setMinValue(1)
+                    .setMaxValue(100)
                     .setRequired(true)
                 ),
                 // #endregion
@@ -152,11 +152,11 @@ const cmds = async () => {
                 new SlashCommandBuilder()
                 .setName("purgeclean")
                 .setDescription("Delete multiple messages in channel with a log")
-                .addStringOption(option =>
+                .addIntegerOption(option =>
                     option.setName("count")
                     .setDescription("How many messages do you want to delete")
-                    .setMinLength(1)
-                    .setMaxLength(3)
+                    .setMinValue(1)
+                    .setMaxValue(100)
                     .setRequired(true)
                 ),
                 // #endregion
