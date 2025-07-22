@@ -254,6 +254,30 @@ const cmds = async () => {
                     .setRequired(false)
                 ),
                 // #endregion
+                // #region Postrules
+                new SlashCommandBuilder()
+                .setName("postrules")
+                .setDescription("Post a message from file")
+                .addStringOption(option =>
+                    option.setName("channel")
+                    .setDescription("Select the channel id")
+                    .setRequired(true)
+                )
+                .addStringOption(option =>
+                    option.setName("headline")
+                    .setDescription("The Headline for the embed message")
+                    .setRequired(true)
+                )
+                .addStringOption(option =>
+                    option.setName("language")
+                    .setDescription("What should the bot write for you")
+                    .addChoices(
+                        { name: "English", value: "rules-en.info" },
+                        { name: "German", value: "rules-en.info" }
+                    )
+                    .setRequired(true)
+                ),
+                // #endregion
             ]
         })
     } catch (error) {

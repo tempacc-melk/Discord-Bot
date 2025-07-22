@@ -27,7 +27,8 @@ const rulesDenied = JSON.parse(jsonData)['rules-denied-role']
 const roleEnglish = JSON.parse(jsonData)['en-role']
 const roleGerman = JSON.parse(jsonData)['de-role']
 // #endregion
-const { generateEmbed, guildLogo, guildImage } = require('./Src/embeds.js')
+const { generateEmbed, guildLogo, guildImage, rulesEmbed } = require('./Src/embeds.js')
+const { Readline } = require('readline/promises')
 const deletedMsg = new Set()
 // =================================================================================================== //
 try {
@@ -75,7 +76,6 @@ client.on("messageDelete", async (message) => {
 	
 	return await castLog (`User: <${message.author}> deleted a message, see below.\nMessage: ${message.content}`, 2)
 })
-
 // Check if a interaction has been created
 client.on("interactionCreate", async (interaction) => {
     // Check if the interaction is a command
@@ -96,42 +96,38 @@ client.on("interactionCreate", async (interaction) => {
 				const rulesNumber = parseInt(await interaction.options.getString("number"))
 				const rulesPoint = parseInt(await interaction.options.getString("point"))
 				const getPointLine = rulesNumber+rulesPoint
-				
+				let output = ""
 				if (ruleslanguage === "en") {
 					if(rulesNumber === 0) {
-						//interaction.reply({ content: `${rulesEN[rulesNumber]}`, ephemeral: false })
-						await interaction.reply({ 
-							content: `${rulesEN[rulesNumber]}\n${rulesEN[1]}`, 
-							ephemeral: false 
-						})
+						output = `${rulesEN[rulesNumber]}\n${rulesEN[1]}`
 					} else if(rulesNumber > 2) {
 						if(rulesPoint > 2) {
-							await interaction.reply({ 
-								content: `${rulesEN[rulesNumber]}\n${rulesEN[getPointLine-1]}`, 
-								ephemeral: false 
-							})
+							output = `${rulesEN[rulesNumber]}\n${rulesEN[getPointLine-1]}`
 						} else {
-							await interaction.reply({ 
-								content: `${rulesEN[rulesNumber]}\n${rulesEN[getPointLine]}`, 
-								ephemeral: false 
-							})
+							output = `${rulesEN[rulesNumber]}\n${rulesEN[getPointLine]}`
 						}
 					} else {
-						await interaction.reply({ 
-							content: `${rulesEN[rulesNumber]}\n${rulesEN[getPointLine]}`, 
-							ephemeral: false 
-						})
+						output = `${rulesEN[rulesNumber]}\n${rulesEN[getPointLine]}`
 					}
-	
 				}
 				if (ruleslanguage === "de") {
-					await interaction.reply({ 
-						content: `${rulesDE[rulesNumber]}\n${rulesDE[getPointLine]}`, 
-						ephemeral: false 
-					})
-	
+					if(rulesNumber === 0) {
+						output = `${rulesDE[rulesNumber]}\n${rulesDE[1]}`
+					} else if(rulesNumber > 2) {
+						if(rulesPoint > 2) {
+							output = `${rulesDE[rulesNumber]}\n${rulesDE[getPointLine-1]}`
+						} else {
+							output = `${rulesDE[rulesNumber]}\n${rulesDE[getPointLine]}`
+						}
+					} else {
+						output = `${rulesDE[rulesNumber]}\n${rulesDE[getPointLine]}`
+					}
 				}
 
+				await interaction.reply({ 
+					content: output, 
+					ephemeral: false 
+				})
 			break
 			case "slow-mode":
 				const lChannel = await interaction.options.getString("channel")
@@ -190,8 +186,9 @@ client.on("interactionCreate", async (interaction) => {
 						await tUser.timeout(calculatedTime, lReason)
 					} catch (error) {
 						const timer = new Date()
+						console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on timeout: `)
 						return await interaction.reply({ 
-							content: `Error on timeout. ${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}`, 
+							content: "Something went wrong with timeout. :frowning2:",  
 							ephemeral: true 
 						})
 					}
@@ -219,8 +216,9 @@ client.on("interactionCreate", async (interaction) => {
 					await kUser.kick()
 				} catch (error) {
 					const timer = new Date()
+					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on kick: `)
 					return await interaction.reply({ 
-						content: `Error on kick. ${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}`, 
+						content: "Something went wrong with kick. :frowning2:",  
 						ephemeral: true 
 					})				
 				}
@@ -247,8 +245,9 @@ client.on("interactionCreate", async (interaction) => {
 					await bUser.ban( { reason: bReason })
 				} catch (error) {
 					const timer = new Date()
+					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on ban: `)
 					return await interaction.reply({ 
-						content: `Error on ban. ${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}`, 
+						content: "Something went wrong with ban. :frowning2:",  
 						ephemeral: true 
 					})
 				}
@@ -279,9 +278,10 @@ client.on("interactionCreate", async (interaction) => {
 					deletedMsg.add(getMsg.id)
 					await getMsg.delete()
 				} catch (error) {
-					const timer = new Date()
+					const timer = new Date()				
+					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on delete`)
 					return await interaction.reply({ 
-						content: `Error on delete. ${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}`, 
+						content: "Something went wrong with delete. :frowning2:", 
 						ephemeral: true 
 					})
 				}
@@ -402,18 +402,41 @@ client.on("interactionCreate", async (interaction) => {
 				const pmcal = await interaction.options.getBoolean("calender")
 				const pmstart = await interaction.options.getString("startdate")
 				const pmend = await interaction.options.getString("enddate")
-				const filesToSend = [guildLogo]
-				if (pmsendimg != null) filesToSend.push(guildImage)
+				const pmfiles = [guildLogo]
+				if (pmsendimg != null) pmfiles.push(guildImage)
 				
 				await client.channels.cache.get(lUserChannel).send({
 					embeds: [generateEmbed(pmheadline, pmmsg, pmsendimg, {pmcal, pmstart, pmend})],
-					files: filesToSend
+					files: pmfiles
 				})
 				await interaction.reply({ 
 					content: "Message has been written.", 
 					ephemeral: true
 				})
 			break
+			case "postrules":
+				if (!interaction.member.roles.cache.has(adminRole)) {
+					return await interaction.reply({ 
+						content: "Only the admin can use this function.", 
+						ephemeral: true
+					})
+				}
+				
+				const prheadline = await interaction.options.getString("headline")
+				const prlanguage = await interaction.options.getString("language")
+				const prfiles = [guildLogo]
+				if (pmsendimg != null) prfiles.push(guildImage)
+								
+				await client.channels.cache.get(lUserChannel).send({
+					embeds: [rulesEmbed(prheadline, prlanguage)],
+					files: prfiles
+				})
+				await interaction.reply({ 
+					content: "Message has been written.", 
+					ephemeral: true
+				})
+			break
+
 			case "purgeclean":
 				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
@@ -431,10 +454,12 @@ client.on("interactionCreate", async (interaction) => {
 					})
 				} catch (error) {
 					const timer = new Date()
+					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on purgeclean -> ${error}`)
 					await interaction.reply({ 
-						content: `Error during purgeclean. ${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}`, 
+						content: "Something went wrong with purgeclean. :frowning2:", 
 						ephemeral: true 
 					})
+
 				}
 			break
 		}
