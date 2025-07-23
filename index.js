@@ -27,7 +27,8 @@ const rulesDenied = JSON.parse(jsonData)['rules-denied-role']
 const roleEnglish = JSON.parse(jsonData)['en-role']
 const roleGerman = JSON.parse(jsonData)['de-role']
 // #endregion
-const { generateEmbed, guildLogo, guildImage, guildImageDel, rulesEmbed } = require('./Src/embeds.js')
+const { generateEmbed, rulesEmbed } = require('./Src/embeds.js')
+const { detectOwnerInput, whitelist } = require('./bot-config.js')
 const deletedMsg = new Set()
 // =================================================================================================== //
 client.login(botToken)
@@ -37,11 +38,20 @@ if (client.isReady) {
 	console.log(`Bot Initialized: ${started.toLocaleDateString()} ${started.toLocaleTimeString()}`)
 }
 
-// Check all messages if they contain a link or it starts with '/'
+// Check all messages if they contain a link or it starts with '/' guild owners are excluded
 client.on("messageCreate", async (message) => {
 	if (message.author.bot) return
-	//if (message.member.permissions.has ("Administrator"|"Moderator")) return
 	const getMsg = message.content
+	if (message.member.permissions.has ("Administrator")) {
+		if (getMsg.toLowerCase().startsWith('scarlet')) {
+			const botOutput = detectOwnerInput(getMsg)
+			return await message.reply({
+				content: botOutput,
+				ephemeral: false
+			})
+		}
+	}
+
 	if (getMsg.startsWith('/')) {
 		await castLog (`<@${botID}> deleted a message, see below.\n${message.member}\n${getMsg}`, 2)
 		deletedMsg.add(message.id)
@@ -601,11 +611,18 @@ function CheckRoles (userRole, targetRole) {
 // Create array with "http:", "https:" and "www."
 // return true if RegExp has found an item from the array
 function CheckMessageForLinks (message) {
-	const checkForLink = ["http:", "https:", "www."]
+	const checkForLink = ["http:", "www."]
 	const regex = new RegExp(checkForLink.join( "|" ), "i")
-
 	const checked = regex.test(message)
-	if (checked) deletedMsg.add(message.id)
+
+	// wip
+	if (checked) {
+		deletedMsg.add(message.id)
+	} else {
+		if (global.allowWhitelist) {
+
+		}
+	}
 	return checked
 }
 
@@ -626,8 +643,8 @@ async function castLog (content, type) {
 		const pmmsg = `${msgSplit[2]}`
 		client.channels.cache.get(channelMsgDel).send(msgSplit[0])
 		client.channels.cache.get(channelMsgDel).send({ 
-			embeds: [generateEmbed(null, `${msgSplit[1]}`, guildImageDel.name, { pmmsg })],
-			files: [guildImageDel]
+			embeds: [generateEmbed(null, `${msgSplit[1]}`, global.guildImageDel.name, { pmmsg })],
+			files: [global.guildImageDel]
 		})
 	}
 	// 3 user-timeout

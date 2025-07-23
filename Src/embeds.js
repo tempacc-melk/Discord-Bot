@@ -4,6 +4,10 @@ const guildLogo = new AttachmentBuilder('./Assets/GuildLogo.png', { name: 'Guild
 const guildImage = new AttachmentBuilder('./Assets/FooterImage.png', { name: 'FooterImage.png' })
 const guildImageDel = new AttachmentBuilder('./Assets/FooterImageDel.png', { name: 'FooterImageDel.png' })
 
+global.guildLogo = guildLogo
+global.guildImage = guildImage
+global.guildImageDel = guildImageDel
+
 function generateEmbed (stitle, msg, image, options = {}) {
     const innerEmbed = new EmbedBuilder()
         .setColor(0x003366)
@@ -62,4 +66,4 @@ function rulesEmbed (stitle, language) {
     return innerEmbed
 }
 
-module.exports = {  generateEmbed, guildLogo, guildImage, guildImageDel, rulesEmbed }
+module.exports = {  generateEmbed, rulesEmbed }
