@@ -27,7 +27,7 @@ const rulesDenied = JSON.parse(jsonData)['rules-denied-role']
 const roleEnglish = JSON.parse(jsonData)['en-role']
 const roleGerman = JSON.parse(jsonData)['de-role']
 // #endregion
-const { generateEmbed, guildLogo, guildImage, rulesEmbed } = require('./Src/embeds.js')
+const { generateEmbed, guildLogo, guildImage, guildImageDel, rulesEmbed } = require('./Src/embeds.js')
 const deletedMsg = new Set()
 // =================================================================================================== //
 client.login(botToken)
@@ -42,34 +42,43 @@ client.on("messageCreate", async (message) => {
 	if (message.author.bot) return
 	//if (message.member.permissions.has ("Administrator"|"Moderator")) return
 	const getMsg = message.content
-
 	if (getMsg.startsWith('/')) {
-		await castLog (`Mod: <@${botID}> deleted a message, see below.\nUser: <@${message.author.id}>\nMessage: ${getMsg}`, 2)
+		await castLog (`<@${botID}> deleted a message, see below.\n${message.member}\n${getMsg}`, 2)
 		deletedMsg.add(message.id)
 		if (message.content != "Unknown Message") return await message.delete()
 	}
 	if (CheckMessageForLinks (message)) {
-		await castLog (`Mod: <@${botID}> deleted a message, see below.\nUser: <@${message.author.id}>\nMessage: ${getMsg}`, 2)
+		await castLog (`<@${botID}> deleted a message, see below.\n${message.member}\n${getMsg}`, 2)
 		if (message.content != "Unknown Message") return await message.delete()
 	}
 })
 // Check if message has been updated
 client.on("messageUpdate", async (message) => {
-	if (!CheckMessageForLinks(message)) {
-		const targetId = message.author.id
-		await castLog (`User: <@${targetId}> updated a message, see below.\nOld Message: ${message.content}`, 1)
+	const isPartial = message.partial
+	const msgTarget = isPartial ? message.reactions.message.author : message.author
+	const messageID = isPartial ? message.reactions.message.id : message.id
+	const messageCon = isPartial ? "Err: Message cannot be retrieved" : message.content
+	const newMsg = message.reactions.message.content
+
+	if (!CheckMessageForLinks(newMsg)) {
+		await castLog (`User: ${msgTarget} updated a message, see below.\nOld Message: ${messageCon}`, 1)
 	} else {
-		await castLog (`Mod: <@${botID}> deleted a message, see below.\nUser: <@${message.author.id}>\nMessage: ${message.content}`, 2)
+		await castLog (`<@${botID}> deleted a message, see below.\n${msgTarget}\n${newMsg}`, 2)
+		deletedMsg.add(messageID)
 		return await message.delete()
 	}
 })
 // Check if messages has been deleted
 client.on("messageDelete", async (message) => {
+	const isPartial = message.partial
+	const msgTarget = isPartial ? `Err: User cannot be retrieved` : message.author
+	const getMsg = isPartial ? "Err: Message cannot be retrieved" : message.content
+
 	if (deletedMsg.has(message.id)) {
 		return deletedMsg.delete(message.id)
 	}
-	
-	return await castLog (`User: ${message.author} deleted a message, see below.\nMessage: ${message.content}`, 2)
+
+	return await castLog (`<@${botID}> deleted a message, see below.\n${msgTarget}\n${getMsg}`, 2)
 })
 // Check if a interaction has been created
 client.on("interactionCreate", async (interaction) => {
@@ -613,7 +622,13 @@ async function castLog (content, type) {
 	}
 	// 2 msg-del
 	if (type === 2) {
-		client.channels.cache.get(channelMsgDel).send(content)
+		const msgSplit = content.split('\n')
+		const pmmsg = `${msgSplit[2]}`
+		client.channels.cache.get(channelMsgDel).send(msgSplit[0])
+		client.channels.cache.get(channelMsgDel).send({ 
+			embeds: [generateEmbed(null, `${msgSplit[1]}`, guildImageDel.name, { pmmsg })],
+			files: [guildImageDel]
+		})
 	}
 	// 3 user-timeout
 	if (type === 3) {

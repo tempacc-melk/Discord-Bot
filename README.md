@@ -31,7 +31,7 @@ Files that you manually need to create: In 'Infos' -> 'settings.json'<br />
 To apply all commands you have to type into a terminal "node src/commands.js" otherwise changes<br />
 will not apply! To run the Bot type "node ." into the terminal<br />
 <br />
-**<ins>I recommend as of now to use Visual Studio Code -> To open a console with the Bot click Ctrl + Shift + C<br />
+**<ins>I recommend as of now to use Visual Studio Code -> To open a console with the Bot press Ctrl + Shift + C<br />
 in a window and there you can type "node ." and close Visual Studio Code</ins>**<br />
 
 <h2>Index.js content</h2>
@@ -95,7 +95,6 @@ The same goes for the deleteMsg command<br />
 2. RulesEmbed
    - This is posting the entirety of the rules depending on which language has been selected<br />
 
-...<br />
 <br />
 
 > [!WARNING]

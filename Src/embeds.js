@@ -2,6 +2,7 @@ const { EmbedBuilder, AttachmentBuilder } = require('discord.js')
 
 const guildLogo = new AttachmentBuilder('./Assets/GuildLogo.png', { name: 'GuildLogo.png' })
 const guildImage = new AttachmentBuilder('./Assets/FooterImage.png', { name: 'FooterImage.png' })
+const guildImageDel = new AttachmentBuilder('./Assets/FooterImageDel.png', { name: 'FooterImageDel.png' })
 
 function generateEmbed (stitle, msg, image, options = {}) {
     const innerEmbed = new EmbedBuilder()
@@ -11,17 +12,24 @@ function generateEmbed (stitle, msg, image, options = {}) {
         .setDescription(msg)
         .setTimestamp()
 
-    if (options != null && options.pmcal) {
-        const curDate = new Date()
-        const starttimer = options.pmstart != null ? options.pmstart : parseInt(curDate.getTime()/1000)
-        const endtimer = options.pmend != null ? options.pmend : null
-        innerEmbed.addFields({ name: ':arrow_forward:Start Date', value: `<t:${starttimer}:F>`, inline: true })
-        if (endtimer != null) {
-            innerEmbed.addFields({ name: ':stop_button:End Date', value: `<t:${endtimer}:F>`, inline: true })
-        } else {
-            innerEmbed.addFields({ name: ':stop_button:End Date', value: `No End Date!`, inline: true })
+    if (options != null) {
+        if (options.pmmsg) {
+            innerEmbed.setThumbnail(null)
+            innerEmbed.addFields({ name: " ", value: options.pmmsg })
+        }
+        if (options.pmcal != null) {
+            const curDate = new Date()
+            const starttimer = options.pmstart != null ? options.pmstart : parseInt(curDate.getTime()/1000)
+            const endtimer = options.pmend != null ? options.pmend : null
+            innerEmbed.addFields({ name: ':arrow_forward:Start Date', value: `<t:${starttimer}:F>`, inline: true })
+            if (endtimer != null) {
+                innerEmbed.addFields({ name: ':stop_button:End Date', value: `<t:${endtimer}:F>`, inline: true })
+            } else {
+                innerEmbed.addFields({ name: ':stop_button:End Date', value: `No End Date!`, inline: true })
+            }
         }
     }
+    
     if (image != null) innerEmbed.setImage(`attachment://${image}`)
 
     return innerEmbed
@@ -50,7 +58,8 @@ function rulesEmbed (stitle, language) {
 
 
     if (stitle != null) innerEmbed.setTitle(`${stitle}`)
+
     return innerEmbed
 }
 
-module.exports = {  generateEmbed, guildLogo, guildImage, rulesEmbed }
+module.exports = {  generateEmbed, guildLogo, guildImage, guildImageDel, rulesEmbed }
