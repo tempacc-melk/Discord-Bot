@@ -1,3 +1,8 @@
+// #region Firststart
+function initializeFirstLaunch() {
+    
+}
+// #endregion
 // #region Detect owner input
 function detectOwnerInput (message) {
     let output = "I detected your input, nothing happened yet. [wip]"

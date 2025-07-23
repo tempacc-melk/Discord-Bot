@@ -106,6 +106,10 @@ Below you can see all commands that currently exists and can be used<br />
 1. GenerateEmbed: [wip] This allows posting a embed message, depending on what parameters are passed on and the embed message formatted accordingly<br />
 2. RulesEmbed: This is posting the entirety of the rules depending on which language has been selected<br />
 
+<h3>Bot-config.js content</h3>
+
+...<br />
+
 <h2>Future plans</h2>
 
 1. My future plans is the create a enviroment where the person launching this bot can configurate it via writing in a channel or with commands.

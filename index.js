@@ -20,6 +20,7 @@ const channelUserTimeout = JSON.parse(jsonData)['user-timeout-channel']
 const channelUserBan = JSON.parse(jsonData)['user-ban-channel']
 // #endregion
 // #region Roles
+const ownerRole = JSON.parse(jsonData)['ownerID']
 const adminRole = JSON.parse(jsonData)['admin-role-id']
 const roleMember = JSON.parse(jsonData)['member-role']
 const rulesAccepted = JSON.parse(jsonData)['rules-accepted-role']
@@ -42,7 +43,8 @@ if (client.isReady) {
 client.on("messageCreate", async (message) => {
 	if (message.author.bot) return
 	const getMsg = message.content
-	if (message.member.permissions.has ("Administrator")) {
+	const getAuthor = await message.guild.members.fetch(message.member)
+	if (CheckRoles(getAuthor)) {
 		if (getMsg.toLowerCase().startsWith('scarlet')) {
 			const botOutput = detectOwnerInput(getMsg)
 			return await message.reply({
@@ -179,7 +181,7 @@ client.on("interactionCreate", async (interaction) => {
 			case "timeout":
 				const tUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
 				await castLog (`${getMod} has used /timeout in <#${lUserChannel}> on ${tUser}`, 0)
-				const tcrID = CheckRoles(getMod, tUser)
+				const tcrID = CheckRoles(getMod, {tUser})
 				if(!tcrID) {
 					return await interaction.reply({ 
 						content: `You cannot timeout a user with the same or higher position then yours.`, 
@@ -222,7 +224,7 @@ client.on("interactionCreate", async (interaction) => {
 				const kUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
 				await castLog (`${getMod} has used /kick on ${kUser}`, 0)
 				const kReason = await interaction.options.getString("reason")
-				const kcrID = CheckRoles(getMod, kUser)
+				const kcrID = CheckRoles(getMod, {kUser})
 				if (!kcrID) {
 					return interaction.reply({ 
 						content: "You cannot kick a user with the same or higher position then yours.",
@@ -250,7 +252,7 @@ client.on("interactionCreate", async (interaction) => {
 				const bUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
 				await castLog (`${getMod}> has used /ban on ${bUser}`, 0)
 				const bReason = await interaction.options.getString("reason")
-				const bcrID = CheckRoles(getMod, bUser)
+				const bcrID = CheckRoles(getMod, {bUser})
 				if (!bcrID) {
 					return interaction.reply({ 
 						content: "You cannot ban a user with the same or higher position then yours.",
@@ -283,7 +285,7 @@ client.on("interactionCreate", async (interaction) => {
 				const channel = interaction.client.channels.cache.get(eaID[0])
 				const getMsg = await channel.messages.fetch(eaID[1])
 				const targetMember = await interaction.guild.members.fetch(getMsg.author.id)
-				const dcrID = CheckRoles(getMod, targetMember)
+				const dcrID = CheckRoles(getMod, {targetMember})
 				if (!dcrID) {
 					return interaction.reply({ 
 						content: "The message cannot be deleted, you don't have enough permission.",
@@ -602,9 +604,11 @@ client.on("interactionCreate", async (interaction) => {
 // Check if the userRole (Moderator) and the targetRole
 // if the userRole is the owner return true
 // if the userRole position is higher then targetRole return false
-function CheckRoles (userRole, targetRole) {
-	if (userRole === userRole.guild.ownerId) return false
-	return userRole.roles.highest.position > targetRole.roles.highest.position
+function CheckRoles (userRole, options = {}) {
+	if (userRole.user.id === ownerRole) return true
+	if (options.targetRole != null) {
+		return userRole.roles.highest.position < options.targetRole.roles.highest.position
+	}
 }
 
 // Check if the message contains any forms of links with RegExp
