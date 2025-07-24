@@ -16,12 +16,12 @@ function generateEmbed (stitle, msg, image, options = {}) {
         .setDescription(msg)
         .setTimestamp()
 
-    if (options !== null) {
+    if (options != null) {
         if (options.pmmsg) {
             innerEmbed.setThumbnail(null)
             innerEmbed.addFields({ name: " ", value: options.pmmsg })
         }
-        if (options.pmcal !== null) {
+        if (options.pmcal != null) {
             const curDate = new Date()
             const starttimer = options.pmstart != null ? options.pmstart : parseInt(curDate.getTime()/1000)
             const endtimer = options.pmend != null ? options.pmend : null
@@ -34,7 +34,7 @@ function generateEmbed (stitle, msg, image, options = {}) {
         }
     }
     
-    if (image !== null) innerEmbed.setImage(`attachment://${image}`)
+    if (image != null) innerEmbed.setImage(`attachment://${image}`)
 
     return innerEmbed
 }

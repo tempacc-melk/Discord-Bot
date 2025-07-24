@@ -51,7 +51,7 @@ client.on("messageCreate", async (message) => {
 	if (message.author.bot) return
 	const getMsg = message.content
 	const getAuthor = await message.guild.members.fetch(message.member)
-	if (CheckRoles(getAuthor)) {
+	if (getAuthor.id === ownerRole) {
 		if (getMsg.toLowerCase().startsWith('scarlet')) {
 			const botOutput = detectOwnerInput(getMsg)
 			await message.reply({
@@ -180,9 +180,28 @@ client.on("interactionCreate", async (interaction) => {
 			// [wip]
 			case "purge":
 				await castLog (`${getMod} has used /purge in <#${lUserChannel}>`, 0)
+				
+				let pCount = await interaction.options.getInteger("count")
+				let pOutput = "Empty"
+				castLog(`${getMod} deleted ${pCount} messages in <#${lUserChannel}>, see below.`, 2)
+				try {
+					const lastMessages = await interaction.channel.messages.fetch({ limit: pCount })
+					lastMessages.forEach(msg => {
+						castLog(`${getMod}\n${msg.author}\n${msg.content}`, 2)
+					 })
+					await interaction.channel.bulkDelete(pCount)
+					pOutput = `Deleted messages: ${pCount}` 
+				} catch (error) {
+					const timer = new Date()
+					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on purgeclean: ${error}`)
+					await interaction.reply({ 
+						content: "Something went wrong with purgeclean. :frowning2:", 
+						ephemeral: true 
+					})
+				}
 
 				await interaction.reply({ 
-					content: `Placeholder`, 
+					content: pOutput, 
 					ephemeral: true 
 				})
 			break
@@ -471,10 +490,12 @@ client.on("interactionCreate", async (interaction) => {
 				}
 
 				let pcCount = await interaction.options.getInteger("count")
-				let pcOutput = ""
+				let pcOutput = "Empty"
 				try {
 					const lastMessages = await interaction.channel.messages.fetch({ limit: pcCount })
-					lastMessages.forEach(msg => {deletedMsg.add(msg.id) })
+					lastMessages.forEach(msg => { 
+						deletedMsg.add(msg.id) 
+					})
 					await interaction.channel.bulkDelete(pcCount)
 					pcOutput = `Deleted messages: ${pcCount}` 
 				} catch (error) {
@@ -650,12 +671,16 @@ async function castLog (content, type) {
 	// 2 msg-del
 	if (type === 2) {
 		const msgSplit = content.split('\n')
-		const pmmsg = `${msgSplit[2]}`
-		client.channels.cache.get(channelMsgDel).send(msgSplit[0])
-		client.channels.cache.get(channelMsgDel).send({ 
-			embeds: [generateEmbed(null, `${msgSplit[1]}`, global.guildImageDel.name, { pmmsg })],
-			files: [global.guildImageDel]
-		})
+		if (msgSplit.length === 1) {
+			client.channels.cache.get(channelMsgDel).send(msgSplit[0])
+		} else if (msgSplit.length > 1) {
+			const pmmsg = `${msgSplit[2]}`
+			//client.channels.cache.get(channelMsgDel).send(msgSplit[0])
+			client.channels.cache.get(channelMsgDel).send({ 
+				embeds: [generateEmbed(null, `${msgSplit[1]}`, global.guildImageDel.name, { pmmsg })],
+				files: [global.guildImageDel]
+			})	
+		}
 	}
 	// 3 user-timeout
 	if (type === 3) {
