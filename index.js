@@ -1,10 +1,18 @@
+const { initializeLaunch, detectOwnerInput, whitelist } = require('./bot-config.js')
+let il = initializeLaunch()
+if (il === 0) {
+	return console.log (`Something went wrong`)
+} else if (il === 1) {
+	return console.log ("Settings.json was successfully created - please insert your values then restart the bot")
+}
+
 const { Client, GatewayIntentBits, Partials, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js')
 const client = new Client({
 		intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent], 
 		partials: [Partials.GuildMember, Partials.Channel, Partials.Message, Partials.Reaction]
-	})
-const fs = require('fs')
+})
 
+const fs = require('fs')
 const jsonData = fs.readFileSync ('./Infos/settings.json')
 // #region Bot Information
 const botToken = JSON.parse(jsonData)['botToken']
@@ -29,7 +37,6 @@ const roleEnglish = JSON.parse(jsonData)['en-role']
 const roleGerman = JSON.parse(jsonData)['de-role']
 // #endregion
 const { generateEmbed, rulesEmbed } = require('./Src/embeds.js')
-const { detectOwnerInput, whitelist } = require('./bot-config.js')
 const deletedMsg = new Set()
 // =================================================================================================== //
 client.login(botToken)
@@ -47,11 +54,12 @@ client.on("messageCreate", async (message) => {
 	if (CheckRoles(getAuthor)) {
 		if (getMsg.toLowerCase().startsWith('scarlet')) {
 			const botOutput = detectOwnerInput(getMsg)
-			return await message.reply({
+			await message.reply({
 				content: botOutput,
 				ephemeral: false
 			})
 		}
+		return
 	}
 
 	if (getMsg.startsWith('/')) {
@@ -90,7 +98,7 @@ client.on("messageDelete", async (message) => {
 		return deletedMsg.delete(message.id)
 	}
 
-	return await castLog (`<@${botID}> deleted a message, see below.\n${msgTarget}\n${getMsg}`, 2)
+	return await castLog (`<@${botID}> caught a deleted message, see below.\n${msgTarget}\n${getMsg}`, 2)
 })
 // Check if a interaction has been created
 client.on("interactionCreate", async (interaction) => {
@@ -154,7 +162,7 @@ client.on("interactionCreate", async (interaction) => {
 					await client.channels.cache.get(smChannel).setRateLimitPerUser(smDuration)
 				} catch (error) {
 					const timer = new Date()				
-					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on slow-mode`)
+					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on slow-mode: ${error}`)
 					return await interaction.reply({ 
 						content: "Something went wrong with slow-mode. :frowning2:", 
 						ephemeral: true 
@@ -181,7 +189,7 @@ client.on("interactionCreate", async (interaction) => {
 			case "timeout":
 				const tUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
 				await castLog (`${getMod} has used /timeout in <#${lUserChannel}> on ${tUser}`, 0)
-				const tcrID = CheckRoles(getMod, {tUser})
+				const tcrID = CheckRoles(getMod, { targetRole: tUser })
 				if(!tcrID) {
 					return await interaction.reply({ 
 						content: `You cannot timeout a user with the same or higher position then yours.`, 
@@ -203,11 +211,11 @@ client.on("interactionCreate", async (interaction) => {
 					}
 					
 					try {
-						await tUser.send(`Server: ${interaction.guild.name}\nYou received a timeout for: ${lDuration} ${lFormat}\nReason: ${lReason}`)
 						await tUser.timeout(calculatedTime, lReason)
+						await tUser.send(`Server: ${interaction.guild.name}\nYou received a timeout for: ${lDuration} ${lFormat}\nReason: ${lReason}`)
 					} catch (error) {
 						const timer = new Date()
-						console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on timeout: `)
+						console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on timeout: ${error}`)
 						return await interaction.reply({ 
 							content: "Something went wrong with timeout. :frowning2:",  
 							ephemeral: true 
@@ -224,7 +232,7 @@ client.on("interactionCreate", async (interaction) => {
 				const kUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
 				await castLog (`${getMod} has used /kick on ${kUser}`, 0)
 				const kReason = await interaction.options.getString("reason")
-				const kcrID = CheckRoles(getMod, {kUser})
+				const kcrID = CheckRoles(getMod, { targetRole: kUser })
 				if (!kcrID) {
 					return interaction.reply({ 
 						content: "You cannot kick a user with the same or higher position then yours.",
@@ -236,7 +244,7 @@ client.on("interactionCreate", async (interaction) => {
 					await kUser.kick()
 				} catch (error) {
 					const timer = new Date()
-					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on kick: `)
+					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on kick: ${error}`)
 					return await interaction.reply({ 
 						content: "Something went wrong with kick. :frowning2:",  
 						ephemeral: true 
@@ -252,7 +260,7 @@ client.on("interactionCreate", async (interaction) => {
 				const bUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
 				await castLog (`${getMod}> has used /ban on ${bUser}`, 0)
 				const bReason = await interaction.options.getString("reason")
-				const bcrID = CheckRoles(getMod, {bUser})
+				const bcrID = CheckRoles(getMod, { targetRole: bUser })
 				if (!bcrID) {
 					return interaction.reply({ 
 						content: "You cannot ban a user with the same or higher position then yours.",
@@ -264,7 +272,7 @@ client.on("interactionCreate", async (interaction) => {
 					await bUser.ban( { reason: bReason })
 				} catch (error) {
 					const timer = new Date()
-					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on ban: `)
+					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on ban: ${error}`)
 					return await interaction.reply({ 
 						content: "Something went wrong with ban. :frowning2:",  
 						ephemeral: true 
@@ -285,7 +293,7 @@ client.on("interactionCreate", async (interaction) => {
 				const channel = interaction.client.channels.cache.get(eaID[0])
 				const getMsg = await channel.messages.fetch(eaID[1])
 				const targetMember = await interaction.guild.members.fetch(getMsg.author.id)
-				const dcrID = CheckRoles(getMod, {targetMember})
+				const dcrID = CheckRoles(getMod, { targetRole: targetMember })
 				if (!dcrID) {
 					return interaction.reply({ 
 						content: "The message cannot be deleted, you don't have enough permission.",
@@ -298,14 +306,14 @@ client.on("interactionCreate", async (interaction) => {
 					await getMsg.delete()
 				} catch (error) {
 					const timer = new Date()				
-					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on delete`)
+					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on delete: ${error}`)
 					return await interaction.reply({ 
 						content: "Something went wrong with delete. :frowning2:", 
 						ephemeral: true 
 					})
 				}
 
-				await castLog(`Mod: ${getMod} deleted a message.\nUser: ${getMsg.author}\nMessage: ${getMsg.content}`, 2)
+				await castLog(`${getMod} deleted a message, see below.\n${getMsg.author}\n${getMsg.content}`, 2)
 				await interaction.reply({ 
 					content: "Message has been deleted.", 
 					ephemeral: true 
@@ -471,7 +479,7 @@ client.on("interactionCreate", async (interaction) => {
 					pcOutput = `Deleted messages: ${pcCount}` 
 				} catch (error) {
 					const timer = new Date()
-					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on purgeclean -> ${error}`)
+					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on purgeclean: ${error}`)
 					await interaction.reply({ 
 						content: "Something went wrong with purgeclean. :frowning2:", 
 						ephemeral: true 
@@ -606,9 +614,7 @@ client.on("interactionCreate", async (interaction) => {
 // if the userRole position is higher then targetRole return false
 function CheckRoles (userRole, options = {}) {
 	if (userRole.user.id === ownerRole) return true
-	if (options.targetRole != null) {
-		return userRole.roles.highest.position < options.targetRole.roles.highest.position
-	}
+	return userRole.roles.highest.position > options.targetRole.roles.highest.position
 }
 
 // Check if the message contains any forms of links with RegExp

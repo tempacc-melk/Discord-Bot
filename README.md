@@ -120,6 +120,8 @@ Below you can see all commands that currently exists and can be used<br />
 2. A automated moderation system, this means if the bot can detect server rule breaches it should give out warnings and depending on the case even a ban
    Depending on how large the community on the server is and how active the users are I would rather use a database instead of a normal file to track
    all of those informations (warnings, timeouts, kicks, bans, etc.)<br />
+3. Allow to give the mod a status and modify it dynamically
+4. Create a embed message that allowes to give the user a role depending on reaction/button being pressed
 
 
 <br />
@@ -151,6 +153,7 @@ Below you can see all commands that currently exists and can be used<br />
 	"botToken": "...",
 	"botID": "...",
 	"serverID": "...",
+	"ownerID": "...",
 	"channel-en-id": "...",
 	"channel-de-id": "...",
 	"rules-accepted-role": "...",
