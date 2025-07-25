@@ -177,7 +177,6 @@ client.on("interactionCreate", async (interaction) => {
 					ephemeral: true 
 				})
 			break
-			// [wip]
 			case "purge":
 				await castLog (`${getMod} has used /purge in <#${lUserChannel}>`, 0)
 				
@@ -343,7 +342,7 @@ client.on("interactionCreate", async (interaction) => {
 			case "rulesbutton":
 				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
-						content: "Only the admin can use this function.", 
+						content: "Only a admin can use this function.", 
 						ephemeral: true
 					})
 				}
@@ -386,7 +385,7 @@ client.on("interactionCreate", async (interaction) => {
 			case "rulesbutton2":
 				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
-						content: "Only the admin can use this function.", 
+						content: "Only a admin can use this function.", 
 						ephemeral: true
 					})
 				}
@@ -423,7 +422,7 @@ client.on("interactionCreate", async (interaction) => {
 			case "requestplayerbutton":
 				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
-						content: "Only the admin can use this function.", 
+						content: "Only a admin can use this function.", 
 						ephemeral: true
 					})
 				}
@@ -437,7 +436,7 @@ client.on("interactionCreate", async (interaction) => {
 			case "postmessage":
 				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
-						content: "Only the admin can use this function.", 
+						content: "Only a admin can use this function.", 
 						ephemeral: true
 					})
 				}
@@ -484,7 +483,7 @@ client.on("interactionCreate", async (interaction) => {
 			case "purgeclean":
 				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
-						content: "Only the admin can use this function.", 
+						content: "Only a admin can use this function.", 
 						ephemeral: true
 					})
 				}
@@ -511,6 +510,62 @@ client.on("interactionCreate", async (interaction) => {
 					content: pcOutput, 
 					ephemeral: true 
 				})
+			break
+			case "botstatus":
+				if (!interaction.member.roles.cache.has(adminRole)) {
+					return await interaction.reply({ 
+						content: "Only a admin can use this function.", 
+						ephemeral: true
+					})
+				}
+
+				const bsBot = await interaction.options.getInteger("bot")
+				const bsType = await interaction.options.getString("type")
+
+				if (bsBot === 0) {
+					client.users.cache.get(botID).client.user.setPresence({ status: bsType })
+					await interaction.reply({ 
+						content: `Set status for 'Scarlet'`, 
+						ephemeral: true
+					})
+				} else if (bsBot === 1) {
+					await interaction.reply({ 
+						content: `Set status for 'Nova'`, 
+						ephemeral: true
+					})
+				}
+			break
+			case "botactivity":
+				if (!interaction.member.roles.cache.has(adminRole)) {
+					return await interaction.reply({ 
+						content: "Only a admin can use this function.", 
+						ephemeral: true
+					})
+				}
+
+				const baBot = await interaction.options.getInteger("bot")
+				const baType = await interaction.options.getInteger("type")
+				const baText = await interaction.options.getString("text")
+
+				if (baBot === 0) {
+					if (baText === null) {
+						// Removes the activity
+						client.users.cache.get(botID).client.user.setActivity()
+					} else {
+						// Assign Custom text
+						client.users.cache.get(botID).client.user.setActivity({ type: baType, name: baText })
+					}
+					await interaction.reply({ 
+						content: `Set status for 'Scarlet'`, 
+						ephemeral: true
+					})
+				} else if (baBot === 1) {
+					await interaction.reply({ 
+						content: `Set status for 'Nova'`, 
+						ephemeral: true
+					})
+				}
+
 			break
 		}
     }
@@ -635,6 +690,7 @@ client.on("interactionCreate", async (interaction) => {
 // if the userRole position is higher then targetRole return false
 function CheckRoles (userRole, options = {}) {
 	if (userRole.user.id === ownerRole) return true
+	if (options.targetRole.user.id == ownerRole) return false
 	return userRole.roles.highest.position > options.targetRole.roles.highest.position
 }
 

@@ -160,7 +160,7 @@ const cmds = async () => {
                     .setRequired(true)
                 ),
                 // #endregion
-                
+
                 // Owner only area (disable later!)
                 // #region Rules buttons
                 new SlashCommandBuilder()
@@ -276,6 +276,63 @@ const cmds = async () => {
                         { name: "German", value: "rules-en.info" }
                     )
                     .setRequired(true)
+                ),
+                // #endregion
+                // #region Botstatus
+                new SlashCommandBuilder()
+                .setName("botstatus")
+                .setDescription("Set the status for a bot")
+                .addIntegerOption(option =>
+                    option.setName("bot")
+                    .setDescription("Select the bot")
+                    .addChoices(
+                        { name: "Scarlet", value: 0 },
+                        { name: "Nova", value: 1 }
+                    )
+                    .setRequired(true)
+                )
+                .addStringOption(option =>
+                    option.setName("type")
+                    .setDescription("Select the type")
+                    .addChoices(
+                        { name: "Online", value: "online" },
+                        { name: "Idle", value: "idle" },
+                        { name: "Busy", value: "dnd" },
+                        { name: "Invisible", value: "invisible" }
+                    )
+                    .setRequired(true)
+                ),
+                // #endregion
+                // #region Bot activity
+                new SlashCommandBuilder()
+                .setName("botactivity")
+                .setDescription("Set the activity for a bot")
+                .addIntegerOption(option =>
+                    option.setName("bot")
+                    .setDescription("Select the bot")
+                    .addChoices(
+                        { name: "Scarlet", value: 0 },
+                        { name: "Nova", value: 1 }
+                    )
+                    .setRequired(true)
+                )
+                .addIntegerOption(option =>
+                    option.setName("type")
+                    .setDescription("Set the type")
+                    .addChoices(
+                        { name: "Playing", value: 0 },
+                        { name: "Streaming", value: 1 },
+                        { name: "Listening", value: 2 },
+                        { name: "Watching", value: 3 },
+                        { name: "Custom", value: 4 },
+                        { name: "Competing", value: 5 }
+                    )
+                    .setRequired(true)
+                )
+                .addStringOption(option =>
+                    option.setName("text")
+                    .setDescription("Insert text here")
+                    .setRequired(false)
                 ),
                 // #endregion
             ]

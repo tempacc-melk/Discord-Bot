@@ -60,7 +60,7 @@ The same goes for the deleteMsg command<br />
     - Moderator Area<br />
 	  - [x] rules: Allows posting each area of the rules with their sub-points<br />
 	  - [x] slow-mode: Allows a moderator to enable and disable slow mode in a channel. Duration can be between 0 - 999<br />
-	  - [ ] purge: [wip] Cleans a channel from a certain amount of messages. Amount can be between 1 - 999. All messages will be kept in the msg-deleted channel<br />
+	  - [x] purge: Cleans a channel from a certain amount of messages. Amount can be between 1 - 999. All messages will be kept in the msg-deleted channel<br />
 	  - [x] timeout: Give a user a timeout. <br />
 	  - [x] kick: Kick a user from the server<br />
 	  - [x] ban: Bans a user from the server<br />
@@ -73,6 +73,8 @@ The same goes for the deleteMsg command<br />
 	  - [x] postmessage: Posts a embed messages<br />
 	  - [x] postrules: Posts the entire set of rules for the selected language in the channel id<br />
 	  - [x] purgeclean: Cleans a channel from a certain amount of messages. Amount can be between 1 - 999<br />
+	  - [x] botstatus: Changes the bot status to Online, Idle, Busy & Invisible<br />
+	  - [x] botactivity: Gives the bot a custom activity - options are: Playing, Streaming, Listening, Watching, Custom and Competing<br />
   
   - Button Interaction<br />
 	- [x] rulesbutton: Assigns the user the role 'rules-accepted-role' on pressing "Accept" or 'rules-denied-role' on "Deny" button
@@ -120,9 +122,7 @@ Below you can see all commands that currently exists and can be used<br />
 2. A automated moderation system, this means if the bot can detect server rule breaches it should give out warnings and depending on the case even a ban
    Depending on how large the community on the server is and how active the users are I would rather use a database instead of a normal file to track
    all of those informations (warnings, timeouts, kicks, bans, etc.)<br />
-3. Allow to give the mod a status and modify it dynamically
-4. Create a embed message that allowes to give the user a role depending on reaction/button being pressed
-
+3. Create a embed message that allowes to give the user a role depending on reaction/button being pressed<br />
 
 <br />
 <br />
