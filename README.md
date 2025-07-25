@@ -102,6 +102,8 @@ Below you can see all commands that currently exists and can be used<br />
 - /requestplayerbutton channel(+)
 - /postmessage channel(+) headline(+) message(+) image(-) calender(-) startdate(-) enddate(-)
 - /postrules channel(+) headline(+) language(+)
+- /botstatus bot(+) type(+)
+- /botactivity bot(+) type(+) text(-)
 
 <h3>Embeds.js content</h3>
 
