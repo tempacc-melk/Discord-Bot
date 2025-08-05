@@ -8,29 +8,26 @@
 > [!NOTE]
 > Uses:<br />
 > Discord.js v14.15.2<br />
-> node.js v22.14.0<br />
+> node.js v22.18.0 (LTS)<br />
 > nodemon v3.1.9<br />
-> npm v10.9.2<br >
+> npm v10.9.3<br >
 
 <h2>How does this bot work?</h2>
 
 > [!CAUTION]
 > Follow the procedures below!<br />
 
-Be sure to have Developer Mode enabled in Discord!<br />
+1. Download and install Node.js v22.18.0 here: https://nodejs.org/en/download<br />
+2. Be sure to have Developer Mode enabled in Discord!<br />
 -> Open Discord - User Settings - (App Settings) Advanced - Developer Mode -> ENABLE<br />
 -> This is required due to the need of channel, role, user, message IDs<br />
-<br />
-Before you start this Bot make sure that you have all the required modules downloaded and installed<br />
+3. Before you start this Bot make sure that you have all the required modules downloaded and installed<br />
 Check that all folders and files are there<br />
--> Folders that you manually need to create: 'Assets' & 'Infos'<br />
-<br />
-Files that you manually need to create: In 'Infos' -> 'settings.json'<br />
--> Copy the content from the code which is located at the end of readme file into 'settings.json'<br />
 <br />
 To apply all commands you have to type into a terminal "node src/commands.js" otherwise changes
 will not apply! To run the Bot type "node ." into the terminal<br />
 <br />
+
 **<ins>I recommend as of now to use Visual Studio Code -> To open a console with the Bot press Ctrl + Shift + C
 in a window and there you can type "node ." and close Visual Studio Code</ins>**<br />
 
@@ -112,7 +109,11 @@ Below you can see all commands that currently exists and can be used<br />
 
 <h3>Bot-config.js content</h3>
 
-...<br />
+1. InitializeLaunch: This function runs on the start and checks if all the basic folder and files are existing if not they will be created<br />
+2. DetectOwnerInput: This function is for the Bot configuration without any commands [wip]<br />
+3. ChangeAllowlistStatus: Change the Allowlist status from allowed to denied and which site is added or removed from the list<br />
+4. AddItemToAllowlist: Adds a item to the Allowlist<br />
+5. RemoveItemFromAllowlist: Removes a item from the Allowlist<br />
 
 <h2>Future plans</h2>
 
@@ -148,28 +149,3 @@ Below you can see all commands that currently exists and can be used<br />
 > It is recommended to save all settings into a json file (settings.json)<br />
 > The settings.json file folder should be saved into the folder "Infos"<br />
 > All content should be written as text to prevent issues<br />
-> The settings.json file should look like this (replace ... with your values):<br />
-
-```
-{
-	"botToken": "...",
-	"botID": "...",
-	"serverID": "...",
-	"ownerID": "...",
-	"channel-en-id": "...",
-	"channel-de-id": "...",
-	"rules-accepted-role": "...",
-	"rules-denied-role": "...",
-	"admin-role-id": "...",
-	"moderator-role-id": "...",
-	"dev-role-id": "...",
-	"member-role": "...",
-	"en-role": "...",
-	"de-role": "...",
-	"log-channel": "...",
-	"msg-edit-channel": "...",
-	"msg-del-channel": "...",
-	"user-timeout-channel": "...",
-	"user-ban-channel": "..."
-}
-```

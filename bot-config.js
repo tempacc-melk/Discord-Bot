@@ -42,7 +42,7 @@ function initializeLaunch() {
         } catch (error) {
             return 0
         }
-    } 
+    }
 }
 // #endregion
 // #region Detect owner input
@@ -55,63 +55,63 @@ function detectOwnerInput (message) {
     return output
 }
 // #endregion
-// #region Whitelist Area
-let allowWhitelist = false
-global.allowWhitelist = allowWhitelist
-const whitelist = []
+// #region Allowlist Area
+let allowAllowlist = false
+global.allowAllowlist = allowAllowlist
+const allowlist = []
 
-function changeWhitelistStatus (value, options = {}) {
+function changeAllowlistStatus (value, options = {}) {
     const innerBool = Boolean(value)
     let output = ""
-    allowWhitelist = innerBool
+    allowAllowlist = innerBool
 
     if (innerBool) {
-        output = "Whistelist enabled"
+        output = "Allowlist enabled"
     } else {
-        output = "Whitelist disabled"
+        output = "Allowlist disabled"
     }
 
     if (options.linktype != null && options.linkval != null) {
         if (options.linktype === 0) {
-            output += " | " + removeItemFromWhitelist(options.linkval)
+            output += " | " + removeItemFromAllowlist(options.linkval)
         } else {
-            output += " | " + addItemToWhitelist(options.linkval)
+            output += " | " + addItemToAllowlist(options.linkval)
         }
     }
     
     return output
 }
 
-function addItemToWhitelist (newlink) {
+function addItemToAllowlist (newlink) {
     let output = ""
-    const inArray = whitelist.includes(newlink)
+    const inArray = allowlist.includes(newlink)
     if (inArray) {
-        return "Item is already in the whitelist"
+        return "Item is already in the allowlist"
     }
     try {
-        whitelist.push(newlink)
-        output = "Item added to the whitelist"
+        allowlist.push(newlink)
+        output = "Item added to the allowlist"
     } catch (error) {
-        output = "Item cannot be added to the whitelist"
+        output = "Item cannot be added to the allowlist"
     }
     return output
 }
 
-function removeItemFromWhitelist (getlink) {
+function removeItemFromAllowlist (getlink) {
     let output = ""
-    const inArray = whitelist.includes(getlink)
+    const inArray = allowlist.includes(getlink)
     if (inArray) {
         try {
-            whitelist.pop(getlink)
+            allowlist.pop(getlink)
         } catch (error) {
-            output = "Item cannot be removed from the whitelist"
+            output = "Item cannot be removed from the allowlist"
         }
-        output = "Item removed from the whitelist"
+        output = "Item removed from the allowlist"
     } else {
-        return "Item not found in the whitelist"
+        return "Item not found in the allowlist"
     }
     return output
 }
 // #endregion
 
-module.exports = { initializeLaunch, detectOwnerInput, whitelist }
+module.exports = { initializeLaunch, detectOwnerInput, allowlist }

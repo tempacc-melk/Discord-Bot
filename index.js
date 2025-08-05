@@ -1,5 +1,5 @@
-const { initializeLaunch, detectOwnerInput, whitelist } = require('./bot-config.js')
-let il = initializeLaunch()
+const { initializeLaunch, detectOwnerInput, allowlist } = require('./bot-config.js')
+const il = initializeLaunch()
 if (il === 0) {
 	return console.log (`Something went wrong`)
 } else if (il === 1) {
@@ -579,17 +579,11 @@ client.on("interactionCreate", async (interaction) => {
 		// this is used for the server rules accept button
 		if (lBtn === "confirm") {
 			if (lUser.roles.cache.has (rulesAccepted)) {
-				if (interaction.channelId.match(channelEN)) {
-					changed = 11
-				} else {
-					changed = 12
-				}
+				changed = interaction.channelId.match(channelEN) ? 11 : 12
 			} else {
-				if (interaction.channelId.match(channelEN)) {
-					changed = 1
-				} else {
-					changed = 10
-				}lUser.roles.add(roleMember)
+				changed = interaction.channelId.match(channelEN) ? 1 : 10
+
+				lUser.roles.add(roleMember)
 				lUser.roles.add(rulesAccepted)
 				lUser.roles.remove(rulesDenied)
 			}
@@ -598,17 +592,10 @@ client.on("interactionCreate", async (interaction) => {
 		// this is used for the server rules deny button
 		if (lBtn === "cancel") {
 			if (lUser.roles.cache.has (rulesDenied)) {
-				if (interaction.channelId.match(channelEN)) {
-					changed = 21
-				} else {
-					changed = 22
-				}
+				changed = interaction.channelId.match(channelEN) ? 21 : 22
 			} else {
-				if (interaction.channelId.match(channelEN)) {
-					changed = 2
-				} else {
-					changed = 20
-				}
+				changed = interaction.channelId.match(channelEN) ? 2 : 20
+
 				lUser.roles.remove(rulesAccepted)
 				lUser.roles.add(rulesDenied)
 				lUser.roles.remove(roleEnglish)
@@ -706,7 +693,7 @@ function CheckMessageForLinks (message) {
 	if (checked) {
 		deletedMsg.add(message.id)
 	} else {
-		if (global.allowWhitelist) {
+		if (global.allowAllowlist) {
 
 		}
 	}
