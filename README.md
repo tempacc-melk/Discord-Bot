@@ -20,14 +20,14 @@
 > Follow the procedures below!<br />
 
 1. Download and install Node.js v22.18.0 here: https://nodejs.org/en/download<br />
-2. Be sure to have Developer Mode enabled in Discord!<br />
--> Open Discord - User Settings - (App Settings) Advanced - Developer Mode -> ENABLE<br />
-   This is required due to the need of channel, role, user, message IDs<br />
-3. To apply all commands you have to type into a terminal "node src/commands.js" otherwise changes will not apply! To run the Bot type "node ." into the terminal<br />
+2. Start Visual Studio Code -> Select File -> Open Folder -> Select the Bot Folder -> Open Folder<br />
+3. Either type direct into the terminal "node ." or open the Command Prompt in Windows with Ctrl + Shift + C (only works if VSCode is focused) then insert "node ." there and press enter. The second method allows you to close Visual Studio Code after starting the Bot with the basic Command Prompt on Windows.<br />
 <br />
 
-**<ins>I recommend as of now to use Visual Studio Code -> To open a console with the Bot press Ctrl + Shift + C
-in a window and there you can type "node ." and close Visual Studio Code</ins>**<br />
+**<ins>Be sure to have Developer Mode enabled in Discord!<br />
+-> Open Discord - User Settings - (App Settings) Advanced - Developer Mode -> ENABLE<br />
+This is required due to the need of channel, role, user, message IDs**<ins><br />
+<br />
 
 <h3>Index.js content</h3>
 
