@@ -1,16 +1,18 @@
 # Discord-Bot
 > [!IMPORTANT]
-> As the bot is currently in development there will be issues and new features (soonTM)<br />
+> As the bot is currently in development there will be issues and new features<br />
 > I only work on this on my free time hence the irregular updates<br />
 > The bot hasn't been fully stress tested and might break occasionaly<br />
 > Currently there is no mobile support (might add later)<br />
 
 > [!NOTE]
 > Uses:<br />
-> Discord.js v14.15.2<br />
+> Discord.js v14.21.0<br />
 > node.js v22.18.0 (LTS)<br />
 > nodemon v3.1.9<br />
-> npm v10.9.3<br >
+> npm v10.9.3<br />
+> sequelize v6.37.7<br />
+> sqlite3 v5.1.7<br/>
 
 <h2>How does this bot work?</h2>
 
@@ -20,12 +22,8 @@
 1. Download and install Node.js v22.18.0 here: https://nodejs.org/en/download<br />
 2. Be sure to have Developer Mode enabled in Discord!<br />
 -> Open Discord - User Settings - (App Settings) Advanced - Developer Mode -> ENABLE<br />
--> This is required due to the need of channel, role, user, message IDs<br />
-3. Before you start this Bot make sure that you have all the required modules downloaded and installed<br />
-Check that all folders and files are there<br />
-<br />
-To apply all commands you have to type into a terminal "node src/commands.js" otherwise changes
-will not apply! To run the Bot type "node ." into the terminal<br />
+   This is required due to the need of channel, role, user, message IDs<br />
+3. To apply all commands you have to type into a terminal "node src/commands.js" otherwise changes will not apply! To run the Bot type "node ." into the terminal<br />
 <br />
 
 **<ins>I recommend as of now to use Visual Studio Code -> To open a console with the Bot press Ctrl + Shift + C

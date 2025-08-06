@@ -7,6 +7,7 @@ const botID = JSON.parse(jsonData)['botID']
 const serverID = JSON.parse(jsonData)['serverID']
 // =================================================================== //
 const rest = new REST().setToken(botToken)
+const cmdout = null
 const cmds = async () => {
     try {
         await rest.put(Routes.applicationGuildCommands(botID, serverID), {
@@ -338,7 +339,8 @@ const cmds = async () => {
             ]
         })
     } catch (error) {
-        console.error(error)
+        return error
     }
 }
-cmds();
+
+module.exports = { cmds }

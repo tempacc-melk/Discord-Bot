@@ -1,3 +1,4 @@
+const Sequelize = require('sequelize');
 const fs = require('fs')
 // #region Firststart
 function initializeLaunch() {
@@ -50,7 +51,7 @@ function detectOwnerInput (message) {
     let output = "I detected your input, nothing happened yet. [wip]"
     const splitMsg = message.split(' ')
 
-    output = `You have typed ${splitMsg.length} words -> Analysing the text...`
+    output = `You have typed ${splitMsg.length} words -> Analyzing the text...`
     // ...
     return output
 }

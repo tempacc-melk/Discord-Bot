@@ -6,9 +6,9 @@ if (il === 0) {
 	return console.log ("Settings.json was successfully created - please insert your values then restart the bot")
 }
 
-const { Client, GatewayIntentBits, Partials, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js')
+const { Client, GatewayIntentBits, Partials, ButtonBuilder, ButtonStyle, ActionRowBuilder, Events } = require('discord.js')
 const client = new Client({
-		intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent], 
+		intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.MessageContent], 
 		partials: [Partials.GuildMember, Partials.Channel, Partials.Message, Partials.Reaction]
 })
 
@@ -36,9 +36,12 @@ const rulesDenied = JSON.parse(jsonData)['rules-denied-role']
 const roleEnglish = JSON.parse(jsonData)['en-role']
 const roleGerman = JSON.parse(jsonData)['de-role']
 // #endregion
+const { cmds } = require('./Src/commands.js')
 const { generateEmbed, rulesEmbed } = require('./Src/embeds.js')
 const deletedMsg = new Set()
 // =================================================================================================== //
+cmds()
+
 client.login(botToken)
 
 if (client.isReady) {
@@ -47,7 +50,7 @@ if (client.isReady) {
 }
 
 // Check all messages if they contain a link or it starts with '/' guild owners are excluded
-client.on("messageCreate", async (message) => {
+client.on(Events.MessageCreate, async (message) => {
 	if (message.author.bot) return
 	const getMsg = message.content
 	const getAuthor = await message.guild.members.fetch(message.member)
@@ -73,7 +76,7 @@ client.on("messageCreate", async (message) => {
 	}
 })
 // Check if message has been updated
-client.on("messageUpdate", async (message) => {
+client.on(Events.MessageUpdate, async (message) => {
 	const isPartial = message.partial
 	const msgTarget = isPartial ? message.reactions.message.author : message.author
 	const messageID = isPartial ? message.reactions.message.id : message.id
@@ -89,7 +92,7 @@ client.on("messageUpdate", async (message) => {
 	}
 })
 // Check if messages has been deleted
-client.on("messageDelete", async (message) => {
+client.on(Events.MessageDelete, async (message) => {
 	const isPartial = message.partial
 	const msgTarget = isPartial ? `Err: User cannot be retrieved` : message.author
 	const getMsg = isPartial ? "Err: Message cannot be retrieved" : message.content
@@ -101,7 +104,7 @@ client.on("messageDelete", async (message) => {
 	return await castLog (`<@${botID}> caught a deleted message, see below.\n${msgTarget}\n${getMsg}`, 2)
 })
 // Check if a interaction has been created
-client.on("interactionCreate", async (interaction) => {
+client.on(Events.InteractionCreate, async (interaction) => {
     // Check if the interaction is a command
 	if(interaction.isCommand ()) {
 		const getMod = interaction.member
@@ -670,6 +673,18 @@ client.on("interactionCreate", async (interaction) => {
 			ephemeral: true
 		})
 	}
+})
+// Check if a message got a reaction [wip]
+client.on(Events.MessageReactionAdd, async (reaction, user) => {
+	const isPartial = reaction.partial
+	const getReaction = isPartial ? "Reaction could not be detected" : reaction.fetch()
+
+	if (isPartial) {
+		return console.log(getReaction)
+	} else {
+		console.log (`Reaction from: ${reaction.message.author}`)
+	}
+
 })
 
 // Check if the userRole (Moderator) and the targetRole
