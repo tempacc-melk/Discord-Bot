@@ -1,19 +1,21 @@
 const Sequelize = require('sequelize');
-const fs = require('fs')
-// #region Firststart
+const fs = require('fs');
+const readline = require('readline');
+// #region Onstart
 function initializeLaunch() {
+    // Create Assets folder for all images
     if (!fs.existsSync('./Assets')) { 
         console.log("Missing 'Assets' folder")
         fs.mkdirSync('./Assets') 
         console.log("Created 'Assets' folder")
     }
-
+    // Create Infos folder for all files
     if (!fs.existsSync('./Infos')) {
         console.log("Missing 'Infos' folder")
 	    fs.mkdirSync('./Infos')
         console.log("Created 'Infos' folder")
     }
-
+    // Create settings.json in infos folder
     if (!fs.existsSync('./Infos/settings.json')) {
         const settingsFile = {
             "botToken": "...", 
@@ -44,6 +46,24 @@ function initializeLaunch() {
             return 0
         }
     }
+    // Check if the database exists
+    if (!fs.existsSync('./Infos/discord_db.sqlite')) {
+        console.log ("Database has not been found, creating one...")
+        const rl = readline.createInterface(
+            process.stdin,
+            process.stdout
+        )
+        /*
+        rl.question('New username: ', (input) => {
+            // do stuff here...
+            rl.close()
+        })
+        rl.question('New password: ', (input) => {
+            // do stuff here....
+            rl.close()
+        })
+        */
+    }
 }
 // #endregion
 // #region Detect owner input
@@ -57,40 +77,34 @@ function detectOwnerInput (message) {
 }
 // #endregion
 // #region Allowlist Area
-let allowAllowlist = false
-global.allowAllowlist = allowAllowlist
-const allowlist = []
+let enableUrlAllowlist = false
+global.enableUrlAllowlist = enableUrlAllowlist
+const urlallowlist = []
 
-function changeAllowlistStatus (value, options = {}) {
+function changeUrlAllowlist (value, options = {}) {
     const innerBool = Boolean(value)
-    let output = ""
-    allowAllowlist = innerBool
-
-    if (innerBool) {
-        output = "Allowlist enabled"
-    } else {
-        output = "Allowlist disabled"
-    }
+    let output = innerBool ? "UrlAllowlist enabled" : "UrlAllowlist disabled"
+    enableUrlAllowlist = innerBool
 
     if (options.linktype != null && options.linkval != null) {
         if (options.linktype === 0) {
-            output += " | " + removeItemFromAllowlist(options.linkval)
+            output += " | " + removeItemFromUrlAllowlist(options.linkval)
         } else {
-            output += " | " + addItemToAllowlist(options.linkval)
+            output += " | " + addItemToUrlAllowlist(options.linkval)
         }
     }
     
     return output
 }
 
-function addItemToAllowlist (newlink) {
+function addItemToUrlAllowlist (newlink) {
     let output = ""
-    const inArray = allowlist.includes(newlink)
+    const inArray = urlallowlist.includes(newlink)
     if (inArray) {
         return "Item is already in the allowlist"
     }
     try {
-        allowlist.push(newlink)
+        urlallowlist.push(newlink)
         output = "Item added to the allowlist"
     } catch (error) {
         output = "Item cannot be added to the allowlist"
@@ -98,12 +112,12 @@ function addItemToAllowlist (newlink) {
     return output
 }
 
-function removeItemFromAllowlist (getlink) {
+function removeItemFromUrlAllowlist (getlink) {
     let output = ""
-    const inArray = allowlist.includes(getlink)
+    const inArray = urlallowlist.includes(getlink)
     if (inArray) {
         try {
-            allowlist.pop(getlink)
+            urlallowlist.pop(getlink)
         } catch (error) {
             output = "Item cannot be removed from the allowlist"
         }
@@ -114,5 +128,69 @@ function removeItemFromAllowlist (getlink) {
     return output
 }
 // #endregion
+// #region Database
+async function CheckTheDatabase () {
+    // Create discord_db.sqlite in infos folder
+    const [getUser, getPass] = await DatabaseLogin()
+    if (getUser === null || getPass === null) {
+        return console.log ("Invalid login token")
+    }
+    const sequelize = await new Sequelize('discord_db.sqlite', getUser, getPass, {
+        host: 'localhost',
+        dialect: 'sqlite',
+        logging: false,
+        storage: './Infos/discord_db.sqlite',
+    })
 
-module.exports = { initializeLaunch, detectOwnerInput, allowlist }
+    try {
+        sequelize.authenticate()
+        console.log("Authentication - ok")
+    } catch (error) {
+        return console.log(`Authentication error: ${error}`)
+    }
+
+    const dbAccounts = sequelize.define('Accounts', {
+        userid: {
+            type: Sequelize.STRING,
+            primaryKey: true
+        },
+        username: Sequelize.STRING,
+    })
+    dbAccounts.sync()
+    
+    const dbWarnings = sequelize.define('Warnings', {
+        id: {
+             type: Sequelize.INTEGER,
+             primaryKey: true
+        },
+        userid: {
+            type: Sequelize.STRING,
+            references: {
+                model: 'Accounts',
+                key: 'userid'
+            }
+        },
+        msgID: {
+            type: Sequelize.STRING,
+            unique: true
+        },
+        status: Sequelize.STRING,
+        action: Sequelize.INTEGER,
+        reason: Sequelize.STRING
+    })
+
+    dbAccounts.hasMany(dbWarnings, { foreignKey: 'userid' })
+    dbWarnings.belongsTo(dbAccounts)
+
+    dbWarnings.sync()
+    
+}
+// #endregion
+// #region Database stuff
+async function DatabaseLogin () {
+    // do stuff here...
+    return [ 'user', 'password' ]
+}
+// #endregion
+
+module.exports = { initializeLaunch, CheckTheDatabase, detectOwnerInput, urlallowlist }

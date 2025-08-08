@@ -2,3 +2,4 @@
 **/Assets/*.png
 /Infos/settings.json
 /Infos/*.info
+/Infos/*.sqlite

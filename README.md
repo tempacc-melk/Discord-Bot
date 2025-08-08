@@ -22,6 +22,7 @@
 1. Download and install Node.js v22.18.0 here: https://nodejs.org/en/download<br />
 2. Start Visual Studio Code -> Select File -> Open Folder -> Select the Bot Folder -> Open Folder<br />
 3. Either type direct into the terminal "node ." or open the Command Prompt in Windows with Ctrl + Shift + C (only works if VSCode is focused) then insert "node ." there and press enter. The second method allows you to close Visual Studio Code after starting the Bot with the basic Command Prompt on Windows.<br />
+4. Follow the procedures that the bot tells you on launch.<br />
 <br />
 
 **<ins>Be sure to have Developer Mode enabled in Discord!<br />
@@ -32,18 +33,11 @@ This is required due to the need of channel, role, user, message IDs**<ins><br /
 <h3>Index.js content</h3>
 
 1. MessageCreate<br />
-The bot is checking all written messages for links and is deleting those messages
-The same is for all mistyped '/' commands -> unknown commands are deleted, this
-includes moderator commands as well<br />
-
+The bot is checking all written messages for links and is deleting those messages the same is for all mistyped '/' commands -> unknown commands are deleted, this includes moderator commands as well<br />
 2. MessageUpdate<br />
-The bot checks for updated messages, this means once a message has been updated
-the previous message are written down in the msg-edited channel<br />
-
+The bot checks for updated messages, this means once a message has been updated the previous message are written down in the msg-edited channel<br />
 3. MessageDelete<br />
-If a message has been deleted the bot is capturing the content and is creating a
-copy of this message and writes is down in the msg-deleted channel
-The same goes for the deleteMsg command<br />
+If a message has been deleted the bot is capturing the content and is creating a copy of this message and writes is down in the msg-deleted channel the same goes for the deleteMsg command<br />
 <br />
 
 > [!TIP]
@@ -78,7 +72,6 @@ The same goes for the deleteMsg command<br />
 			Upon using the button a message is generated privately and shows the current status to the person who pressed it<br />
 	- [ ] requestplayerbutton: [wip] The idea behind this button is to request a "player" role that indicates that the person is owning
 			or playing a certain game<br />
-<br />
 
 <h3>Commands.js content</h3>
 
@@ -112,19 +105,17 @@ Below you can see all commands that currently exists and can be used<br />
 3. ChangeAllowlistStatus: Change the Allowlist status from allowed to denied and which site is added or removed from the list<br />
 4. AddItemToAllowlist: Adds a item to the Allowlist<br />
 5. RemoveItemFromAllowlist: Removes a item from the Allowlist<br />
+<br />
 
 <h2>Future plans</h2>
 
 1. My future plans is the create a enviroment where the person launching this bot can configurate it via writing in a channel or with commands.
-   To be more precise - the owner should be allowed to configurate all settings without having coding knowledge.
+   To be more precise - the owner should be allowed to configurate all settings without having coding knowledge.<br />
    There are mulitple options on how to handle it.<br />
    - With Commands: This means all configuration will be handled with commands<br />
    - With text: This means the text inputs in a channel will be scanned and certain keywords will lead to changes in the configuration file<br />
-2. A automated moderation system, this means if the bot can detect server rule breaches it should give out warnings and depending on the case even a ban
-   Depending on how large the community on the server is and how active the users are I would rather use a database instead of a normal file to track
-   all of those informations (warnings, timeouts, kicks, bans, etc.)<br />
+2. A automated moderation system, this means if the bot can detect server rule breaches it should give out warnings and depending on the case even a ban depending on how large the community on the server is and how active the users are I would rather use a database instead of a normal file to track all of those informations (warnings, timeouts, kicks, bans, etc.)<br />
 3. Create a embed message that allowes to give the user a role depending on reaction/button being pressed<br />
-
 <br />
 <br />
 

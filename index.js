@@ -1,4 +1,4 @@
-const { initializeLaunch, detectOwnerInput, allowlist } = require('./bot-config.js')
+const { initializeLaunch, CheckTheDatabase, detectOwnerInput, urlallowlist } = require('./bot-config.js')
 const il = initializeLaunch()
 if (il === 0) {
 	return console.log (`Something went wrong`)
@@ -6,7 +6,7 @@ if (il === 0) {
 	return console.log ("Settings.json was successfully created - please insert your values then restart the bot")
 }
 
-const { Client, GatewayIntentBits, Partials, ButtonBuilder, ButtonStyle, ActionRowBuilder, Events } = require('discord.js')
+const { Client, GatewayIntentBits, Partials, ButtonBuilder, ButtonStyle, ActionRowBuilder, Events, MessageFlags } = require('discord.js')
 const client = new Client({
 		intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions, GatewayIntentBits.MessageContent], 
 		partials: [Partials.GuildMember, Partials.Channel, Partials.Message, Partials.Reaction]
@@ -45,6 +45,7 @@ cmds()
 client.login(botToken)
 
 if (client.isReady) {
+	CheckTheDatabase()
 	const started = new Date()
 	console.log(`Bot Initialized: ${started.toLocaleDateString()} ${started.toLocaleTimeString()}`)
 }
@@ -58,8 +59,7 @@ client.on(Events.MessageCreate, async (message) => {
 		if (getMsg.toLowerCase().startsWith('scarlet')) {
 			const botOutput = detectOwnerInput(getMsg)
 			await message.reply({
-				content: botOutput,
-				ephemeral: false
+				content: botOutput
 			})
 		}
 		return
@@ -150,10 +150,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					}
 				}
 
-				await interaction.reply({ 
-					content: output, 
-					ephemeral: false 
-				})
+				await interaction.reply({ content: output })
 			break
 			case "slow-mode":
 				const smChannel = await interaction.options.getString("channel")
@@ -168,7 +165,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on slow-mode: ${error}`)
 					return await interaction.reply({ 
 						content: "Something went wrong with slow-mode. :frowning2:", 
-						ephemeral: true 
+						flags: MessageFlags.Ephemeral
 					})
 				}
 
@@ -177,7 +174,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				
 				await interaction.reply({ 
 					content: smOutput, 
-					ephemeral: true 
+					flags: MessageFlags.Ephemeral 
 				})
 			break
 			case "purge":
@@ -198,13 +195,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on purgeclean: ${error}`)
 					await interaction.reply({ 
 						content: "Something went wrong with purgeclean. :frowning2:", 
-						ephemeral: true 
+						flags: MessageFlags.Ephemeral
 					})
 				}
 
 				await interaction.reply({ 
 					content: pOutput, 
-					ephemeral: true 
+					flags: MessageFlags.Ephemeral
 				})
 			break
 			case "timeout":
@@ -214,7 +211,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				if(!tcrID) {
 					return await interaction.reply({ 
 						content: `You cannot timeout a user with the same or higher position then yours.`, 
-						ephemeral: true 
+						flags: MessageFlags.Ephemeral 
 					})
 				} else {
 					const lDuration = await interaction.options.getInteger("duration")
@@ -239,12 +236,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
 						console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on timeout: ${error}`)
 						return await interaction.reply({ 
 							content: "Something went wrong with timeout. :frowning2:",  
-							ephemeral: true 
+							flags: MessageFlags.Ephemeral 
 						})
 					}
 					await interaction.reply({ 
 						content: `User has recieved a timeout`, 
-						ephemeral: true 
+						flags: MessageFlags.Ephemeral 
 					})
 					await castLog (`${tUser} received a timeout from ${getMod}\nTime: ${lDuration} ${lFormat}\nReason: ${lReason}`, 3)
 				}
@@ -257,7 +254,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				if (!kcrID) {
 					return interaction.reply({ 
 						content: "You cannot kick a user with the same or higher position then yours.",
-						ephemeral: true 
+						flags: MessageFlags.Ephemeral 
 					})
 				}
 				try {
@@ -268,13 +265,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on kick: ${error}`)
 					return await interaction.reply({ 
 						content: "Something went wrong with kick. :frowning2:",  
-						ephemeral: true 
+						flags: MessageFlags.Ephemeral 
 					})				
 				}
 				
 				await interaction.reply({ 
 					content: `Kicked user: ${kUser}`, 
-					ephemeral: true 
+					flags: MessageFlags.Ephemeral 
 				})
 			break
 			case "ban":
@@ -285,7 +282,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				if (!bcrID) {
 					return interaction.reply({ 
 						content: "You cannot ban a user with the same or higher position then yours.",
-						ephemeral: true 
+						flags: MessageFlags.Ephemeral 
 					})
 				}
 				try {
@@ -296,13 +293,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on ban: ${error}`)
 					return await interaction.reply({ 
 						content: "Something went wrong with ban. :frowning2:",  
-						ephemeral: true 
+						flags: MessageFlags.Ephemeral 
 					})
 				}
 
 				await interaction.reply({ 
 					content: `Banned user: ${bUser}`, 
-					ephemeral: true 
+					flags: MessageFlags.Ephemeral 
 				})
 				await castLog (`${bUser} received a ban from ${getMod}\nReason:${bReason}`, 4)
 			break
@@ -318,7 +315,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				if (!dcrID) {
 					return interaction.reply({ 
 						content: "The message cannot be deleted, you don't have enough permission.",
-						ephemeral: true 
+						flags: MessageFlags.Ephemeral 
 					})
 				}
 
@@ -330,14 +327,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on delete: ${error}`)
 					return await interaction.reply({ 
 						content: "Something went wrong with delete. :frowning2:", 
-						ephemeral: true 
+						flags: MessageFlags.Ephemeral 
 					})
 				}
 
 				await castLog(`${getMod} deleted a message, see below.\n${getMsg.author}\n${getMsg.content}`, 2)
 				await interaction.reply({ 
 					content: "Message has been deleted.", 
-					ephemeral: true 
+					flags: MessageFlags.Ephemeral 
 				})
 			break
 			
@@ -346,7 +343,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
 						content: "Only a admin can use this function.", 
-						ephemeral: true
+						flags: MessageFlags.Ephemeral
 					})
 				}
 				const rChannel = interaction.options.getString("channel")
@@ -383,13 +380,16 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					components: [row]
 				})
 
-				await interaction.reply({ content: "Rules buttons have been added", ephemeral: true})
+				await interaction.reply({ 
+					content: "Rules buttons have been added", 
+					flags: MessageFlags.Ephemeral
+				})
 			break
 			case "rulesbutton2":
 				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
 						content: "Only a admin can use this function.", 
-						ephemeral: true
+						flags: MessageFlags.Ephemeral
 					})
 				}
 				const rChannel2 = interaction.options.getString("channel")
@@ -419,20 +419,20 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
 				await interaction.reply({ 
 					content: "Language buttons have been added", 
-					ephemeral: true
+					flags: MessageFlags.Ephemeral
 				})
 			break
 			case "requestplayerbutton":
 				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
 						content: "Only a admin can use this function.", 
-						ephemeral: true
+						flags: MessageFlags.Ephemeral
 					})
 				}
 
 				await interaction.reply({ 
 					content: "Placeholder", 
-					ephemeral: true
+					flags: MessageFlags.Ephemeral
 				})
 
 			break
@@ -440,7 +440,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
 						content: "Only a admin can use this function.", 
-						ephemeral: true
+						flags: MessageFlags.Ephemeral
 					})
 				}
 				
@@ -459,14 +459,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				})
 				await interaction.reply({ 
 					content: "Message has been written.", 
-					ephemeral: true
+					flags: MessageFlags.Ephemeral
 				})
 			break
 			case "postrules":
 				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
 						content: "Only the admin can use this function.", 
-						ephemeral: true
+						flags: MessageFlags.Ephemeral
 					})
 				}
 				
@@ -480,14 +480,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				})
 				await interaction.reply({ 
 					content: "Message has been written.", 
-					ephemeral: true
+					flags: MessageFlags.Ephemeral
 				})
 			break
 			case "purgeclean":
 				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
 						content: "Only a admin can use this function.", 
-						ephemeral: true
+						flags: MessageFlags.Ephemeral
 					})
 				}
 
@@ -505,20 +505,20 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on purgeclean: ${error}`)
 					await interaction.reply({ 
 						content: "Something went wrong with purgeclean. :frowning2:", 
-						ephemeral: true 
+						flags: MessageFlags.Ephemeral 
 					})
 				}
 				
 				await interaction.reply({ 
 					content: pcOutput, 
-					ephemeral: true 
+					flags: MessageFlags.Ephemeral 
 				})
 			break
 			case "botstatus":
 				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
 						content: "Only a admin can use this function.", 
-						ephemeral: true
+						flags: MessageFlags.Ephemeral
 					})
 				}
 
@@ -529,12 +529,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					client.users.cache.get(botID).client.user.setPresence({ status: bsType })
 					await interaction.reply({ 
 						content: `Set status for 'Scarlet'`, 
-						ephemeral: true
+						flags: MessageFlags.Ephemeral
 					})
 				} else if (bsBot === 1) {
 					await interaction.reply({ 
 						content: `Set status for 'Nova'`, 
-						ephemeral: true
+						flags: MessageFlags.Ephemeral
 					})
 				}
 			break
@@ -542,7 +542,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await interaction.reply({ 
 						content: "Only a admin can use this function.", 
-						ephemeral: true
+						flags: MessageFlags.Ephemeral
 					})
 				}
 
@@ -559,13 +559,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
 						client.users.cache.get(botID).client.user.setActivity({ type: baType, name: baText })
 					}
 					await interaction.reply({ 
-						content: `Set status for 'Scarlet'`, 
-						ephemeral: true
+						content: `Set activity for 'Scarlet'`, 
+						flags: MessageFlags.Ephemeral
 					})
 				} else if (baBot === 1) {
 					await interaction.reply({ 
-						content: `Set status for 'Nova'`, 
-						ephemeral: true
+						content: `Set activity for 'Nova'`, 
+						flags: MessageFlags.Ephemeral
 					})
 				}
 
@@ -670,7 +670,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
 		return await interaction.reply ({ 
 			content: returnMsg, 
-			ephemeral: true
+			flags: MessageFlags.Ephemeral
 		})
 	}
 })
@@ -708,7 +708,7 @@ function CheckMessageForLinks (message) {
 	if (checked) {
 		deletedMsg.add(message.id)
 	} else {
-		if (global.allowAllowlist) {
+		if (global.enableUrlAllowlist) {
 
 		}
 	}
