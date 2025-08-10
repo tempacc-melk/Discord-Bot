@@ -45,9 +45,9 @@ cmds()
 client.login(botToken)
 
 if (client.isReady) {
-	CheckTheDatabase()
 	const started = new Date()
 	console.log(`Bot Initialized: ${started.toLocaleDateString()} ${started.toLocaleTimeString()}`)
+	CheckTheDatabase()
 }
 
 // Check all messages if they contain a link or it starts with '/' guild owners are excluded

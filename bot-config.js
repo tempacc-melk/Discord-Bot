@@ -1,6 +1,7 @@
 const Sequelize = require('sequelize');
 const fs = require('fs');
 const readline = require('readline');
+let dbMissing = false
 // #region Onstart
 function initializeLaunch() {
     // Create Assets folder for all images
@@ -48,21 +49,7 @@ function initializeLaunch() {
     }
     // Check if the database exists
     if (!fs.existsSync('./Infos/discord_db.sqlite')) {
-        console.log ("Database has not been found, creating one...")
-        const rl = readline.createInterface(
-            process.stdin,
-            process.stdout
-        )
-        /*
-        rl.question('New username: ', (input) => {
-            // do stuff here...
-            rl.close()
-        })
-        rl.question('New password: ', (input) => {
-            // do stuff here....
-            rl.close()
-        })
-        */
+        dbMissing = true
     }
 }
 // #endregion
@@ -130,8 +117,26 @@ function removeItemFromUrlAllowlist (getlink) {
 // #endregion
 // #region Database
 async function CheckTheDatabase () {
+    if (dbMissing) {
+        console.log ("Database missing, creating new one...")
+        /*
+        const rl = readline.createInterface(
+            process.stdin,
+            process.stdout
+        )
+
+        rl.question('New username: ', (input) => {
+            // do stuff here...
+            rl.close()
+        })
+        rl.question('New password: ', (input) => {
+            // do stuff here....
+            rl.close()
+        })
+        */
+    }
     // Create discord_db.sqlite in infos folder
-    const [getUser, getPass] = await DatabaseLogin()
+    const [ getUser, getPass ] = await DatabaseLogin()
     if (getUser === null || getPass === null) {
         return console.log ("Invalid login token")
     }
@@ -143,50 +148,71 @@ async function CheckTheDatabase () {
     })
 
     try {
-        sequelize.authenticate()
+        await sequelize.authenticate()
         console.log("Authentication - ok")
     } catch (error) {
-        return console.log(`Authentication error: ${error}`)
+        return console.log(`[Authentication error] \n${error}`)
     }
 
-    const dbAccounts = sequelize.define('Accounts', {
-        userid: {
+    const dbUsers = sequelize.define('Users', {
+        UserID: {
             type: Sequelize.STRING,
             primaryKey: true
         },
-        username: Sequelize.STRING,
+        Username: Sequelize.STRING,
+        RulesAccepted: Sequelize.BOOLEAN,
+        Lv: {
+            type: Sequelize.INTEGER,
+            defaultValue: 0
+        },
+        Exp: {
+            type: Sequelize.INTEGER,
+            defaultValue: 0
+        },
+        Joined: {
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.NOW
+        },
+        Left: Sequelize.DATE,
+    }, {
+        timestamps: false
     })
-    dbAccounts.sync()
+    await dbUsers.sync()
     
-    const dbWarnings = sequelize.define('Warnings', {
-        id: {
-             type: Sequelize.INTEGER,
+    const dbInteractions = sequelize.define('Interactions', {
+        InteractionID: {
+             type: Sequelize.BIGINT,
              primaryKey: true
         },
-        userid: {
+        UserID: {
             type: Sequelize.STRING,
             references: {
-                model: 'Accounts',
-                key: 'userid'
+                model: 'Users',
+                key: 'UserID'
             }
         },
-        msgID: {
+        MsgID: {
             type: Sequelize.STRING,
             unique: true
         },
-        status: Sequelize.STRING,
-        action: Sequelize.INTEGER,
-        reason: Sequelize.STRING
+        ModID: {
+            type: Sequelize.STRING,
+            references: {
+                model: 'Users',
+                key: 'UserID'
+            }
+        },
+        Interaction: Sequelize.STRING,
+        InteractionDate: Sequelize.NOW,
+        Reason: Sequelize.STRING
+    }, {
+        timestamps: false
     })
-
-    dbAccounts.hasMany(dbWarnings, { foreignKey: 'userid' })
-    dbWarnings.belongsTo(dbAccounts)
-
-    dbWarnings.sync()
+    await dbInteractions.sync()
     
 }
 // #endregion
-// #region Database stuff
+// #region Database Login
 async function DatabaseLogin () {
     // do stuff here...
     return [ 'user', 'password' ]
