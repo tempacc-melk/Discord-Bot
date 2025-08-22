@@ -66,4 +66,4 @@ function rulesEmbed (stitle, language) {
     return innerEmbed
 }
 
-module.exports = {  generateEmbed, rulesEmbed }
+module.exports = { generateEmbed, rulesEmbed }

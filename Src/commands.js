@@ -1,10 +1,8 @@
 const { REST, Routes, SlashCommandBuilder } = require("discord.js")
-const fs = require('fs');
+const fs = require('fs')
 
 const jsonData = fs.readFileSync ('./Infos/settings.json')
-const botToken = JSON.parse(jsonData)['botToken']
-const botID = JSON.parse(jsonData)['botID']
-const serverID = JSON.parse(jsonData)['serverID']
+const { botToken, botID, serverID } = JSON.parse(jsonData)
 // =================================================================== //
 const rest = new REST().setToken(botToken)
 const cmdout = null

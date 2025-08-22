@@ -1,4 +1,4 @@
-const { initializeLaunch, CheckTheDatabase, detectOwnerInput, urlallowlist } = require('./bot-config.js')
+const { initializeLaunch, CheckTheDatabase, detectOwnerInput, urlallowlist, } = require('./bot-config.js')
 const il = initializeLaunch()
 if (il === 0) {
 	return console.log (`Something went wrong`)
@@ -13,29 +13,11 @@ const client = new Client({
 })
 
 const fs = require('fs')
-const jsonData = fs.readFileSync ('./Infos/settings.json')
-// #region Bot Information
-const botToken = JSON.parse(jsonData)['botToken']
-const botID = JSON.parse(jsonData)['botID']
-// #endregion
-// #region Channels
-const channelEN = JSON.parse(jsonData)['channel-en-id']
-const channelDE = JSON.parse(jsonData)['channel-de-id']
-const channelLog = JSON.parse(jsonData)['log-channel']
-const channelMsgEdit = JSON.parse(jsonData)['msg-edit-channel']
-const channelMsgDel = JSON.parse(jsonData)['msg-del-channel']
-const channelUserTimeout = JSON.parse(jsonData)['user-timeout-channel']
-const channelUserBan = JSON.parse(jsonData)['user-ban-channel']
-// #endregion
-// #region Roles
-const ownerRole = JSON.parse(jsonData)['ownerID']
-const adminRole = JSON.parse(jsonData)['admin-role-id']
-const roleMember = JSON.parse(jsonData)['member-role']
-const rulesAccepted = JSON.parse(jsonData)['rules-accepted-role']
-const rulesDenied = JSON.parse(jsonData)['rules-denied-role']
-const roleEnglish = JSON.parse(jsonData)['en-role']
-const roleGerman = JSON.parse(jsonData)['de-role']
-// #endregion
+let jsonData = fs.readFileSync ('./Infos/settings.json')
+const { botToken, botID, ownerRole } = JSON.parse(jsonData)
+let { channelEN, channelDE, channelLog, channelMsgEdit, channelMsgDel, channelUserTimeout, channelUserBan } = JSON.parse(jsonData)
+let { globalLogging, loggingFormat, editLogging, delLogging, timeoutLogging, banLogging } = JSON.parse(jsonData)
+let { adminRole, memberRole, rulesAccepted, rulesDenied, englishRole, germanRole } = JSON.parse(jsonData)
 const { cmds } = require('./Src/commands.js')
 const { generateEmbed, rulesEmbed } = require('./Src/embeds.js')
 const deletedMsg = new Set()
@@ -50,6 +32,14 @@ if (client.isReady) {
 	CheckTheDatabase()
 }
 
+// Check if a user joins the server
+client.on(Events.GuildMemberAdd, async (user) => {
+	// Check if the user is in the database
+	// if not add them to it, otherwise ignore
+	const userID = user.id
+	
+	Console.log(`User joined the server: ${userID}`)
+})
 // Check all messages if they contain a link or it starts with '/' guild owners are excluded
 client.on(Events.MessageCreate, async (message) => {
 	if (message.author.bot) return
@@ -94,7 +84,7 @@ client.on(Events.MessageUpdate, async (message) => {
 // Check if messages has been deleted
 client.on(Events.MessageDelete, async (message) => {
 	const isPartial = message.partial
-	const msgTarget = isPartial ? `Err: User cannot be retrieved` : message.author
+	const msgTarget = isPartial ? "Err: User cannot be retrieved" : message.author
 	const getMsg = isPartial ? "Err: Message cannot be retrieved" : message.content
 
 	if (deletedMsg.has(message.id)) {
@@ -106,14 +96,14 @@ client.on(Events.MessageDelete, async (message) => {
 // Check if a interaction has been created
 client.on(Events.InteractionCreate, async (interaction) => {
     // Check if the interaction is a command
-	if(interaction.isCommand ()) {
+	if(interaction.isCommand()) {
 		const getMod = interaction.member
 		const lUserChannel = interaction.channel.id
 
 		switch (interaction.commandName) {
 			// Moderator area
 			case "rules":
-				await castLog (`${getMod} has used /rules in <#${lUserChannel}>`, 0)
+				if (globalLogging) await castLog (`${getMod} has used /rules in <#${lUserChannel}>`, 0)
 
 				const ruleslanguage = await interaction.options.getString("language")
 				const rulesEN = fs.readFileSync('Infos/rules-en.info').toString().split('\n')
@@ -155,7 +145,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 			case "slow-mode":
 				const smChannel = await interaction.options.getString("channel")
 				let smDuration = await interaction.options.getInteger("duration")
-				await castLog (`${getMod} has used /slow-mode <#${smChannel}>, duration: ${smDuration} (seconds)`, 0)
+				if (globalLogging) await castLog (`${getMod} has used /slow-mode <#${smChannel}>, duration: ${smDuration} (seconds)`, 0)
 				let smOutput = ""
 				
 				try {
@@ -178,23 +168,23 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				})
 			break
 			case "purge":
-				await castLog (`${getMod} has used /purge in <#${lUserChannel}>`, 0)
+				if (globalLogging) await castLog (`${getMod} has used /purge in <#${lUserChannel}>`, 0)
 				
 				let pCount = await interaction.options.getInteger("count")
 				let pOutput = "Empty"
-				castLog(`${getMod} deleted ${pCount} messages in <#${lUserChannel}>, see below.`, 2)
+				if (globalLogging) castLog(`${getMod} deleted ${pCount} messages in <#${lUserChannel}>, see below.`, 2)
 				try {
 					const lastMessages = await interaction.channel.messages.fetch({ limit: pCount })
 					lastMessages.forEach(msg => {
-						castLog(`${getMod}\n${msg.author}\n${msg.content}`, 2)
+						if (globalLogging) castLog(`${getMod}\n${msg.author}\n${msg.content}`, 2)
 					 })
 					await interaction.channel.bulkDelete(pCount)
 					pOutput = `Deleted messages: ${pCount}` 
 				} catch (error) {
 					const timer = new Date()
-					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on purgeclean: ${error}`)
-					await interaction.reply({ 
-						content: "Something went wrong with purgeclean. :frowning2:", 
+					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on purge: ${error}`)
+					return await interaction.reply({ 
+						content: "Something went wrong with purge. :frowning2:", 
 						flags: MessageFlags.Ephemeral
 					})
 				}
@@ -206,7 +196,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 			break
 			case "timeout":
 				const tUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
-				await castLog (`${getMod} has used /timeout in <#${lUserChannel}> on ${tUser}`, 0)
+				if (globalLogging) await castLog (`${getMod} has used /timeout in <#${lUserChannel}> on ${tUser}`, 0)
 				const tcrID = CheckRoles(getMod, { targetRole: tUser })
 				if(!tcrID) {
 					return await interaction.reply({ 
@@ -243,12 +233,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
 						content: `User has recieved a timeout`, 
 						flags: MessageFlags.Ephemeral 
 					})
-					await castLog (`${tUser} received a timeout from ${getMod}\nTime: ${lDuration} ${lFormat}\nReason: ${lReason}`, 3)
+					if (globalLogging) await castLog (`${tUser} received a timeout from ${getMod}\nTime: ${lDuration} ${lFormat}\nReason: ${lReason}`, 3)
 				}
 			break
 			case "kick":
 				const kUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
-				await castLog (`${getMod} has used /kick on ${kUser}`, 0)
+				if (globalLogging) await castLog (`${getMod} has used /kick on ${kUser}`, 0)
 				const kReason = await interaction.options.getString("reason")
 				const kcrID = CheckRoles(getMod, { targetRole: kUser })
 				if (!kcrID) {
@@ -276,7 +266,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 			break
 			case "ban":
 				const bUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
-				await castLog (`${getMod}> has used /ban on ${bUser}`, 0)
+				if (globalLogging) await castLog (`${getMod}> has used /ban on ${bUser}`, 0)
 				const bReason = await interaction.options.getString("reason")
 				const bcrID = CheckRoles(getMod, { targetRole: bUser })
 				if (!bcrID) {
@@ -301,10 +291,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					content: `Banned user: ${bUser}`, 
 					flags: MessageFlags.Ephemeral 
 				})
-				await castLog (`${bUser} received a ban from ${getMod}\nReason:${bReason}`, 4)
+				if (globalLogging) await castLog (`${bUser} received a ban from ${getMod}\nReason:${bReason}`, 4)
 			break
 			case "delete":
-				await castLog (`${getMod} has used /delete`, 0)
+				if (globalLogging) await castLog (`${getMod} has used /delete`, 0)
 
 				const getMsgID = await interaction.options.getString("msgid")
 				const eaID = getMsgID.split('-')
@@ -331,7 +321,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					})
 				}
 
-				await castLog(`${getMod} deleted a message, see below.\n${getMsg.author}\n${getMsg.content}`, 2)
+				if (globalLogging) await castLog(`${getMod} deleted a message, see below.\n${getMsg.author}\n${getMsg.content}`, 2)
 				await interaction.reply({ 
 					content: "Message has been deleted.", 
 					flags: MessageFlags.Ephemeral 
@@ -368,7 +358,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				.setStyle(ButtonStyle.Secondary)
 				.setEmoji("✖")
 
-				const row = new ActionRowBuilder ()
+				const row = new ActionRowBuilder()
 				.addComponents(confirm,cancel)
 
 				if (rChannel === "en") client.channels.cache.get(channelEN).send({
@@ -405,7 +395,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				.setLabel('Deutsch')
 				.setStyle(ButtonStyle.Secondary)
 	
-				const row2 = new ActionRowBuilder ()
+				const row2 = new ActionRowBuilder()
 				.addComponents(english,german)
 	
 				if (rChannel2 === "en") client.channels.cache.get(channelEN).send({
@@ -503,7 +493,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				} catch (error) {
 					const timer = new Date()
 					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on purgeclean: ${error}`)
-					await interaction.reply({ 
+					return await interaction.reply({ 
 						content: "Something went wrong with purgeclean. :frowning2:", 
 						flags: MessageFlags.Ephemeral 
 					})
@@ -586,7 +576,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 			} else {
 				changed = interaction.channelId.match(channelEN) ? 1 : 10
 
-				lUser.roles.add(roleMember)
+				lUser.roles.add(memberRole)
 				lUser.roles.add(rulesAccepted)
 				lUser.roles.remove(rulesDenied)
 			}
@@ -601,26 +591,26 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
 				lUser.roles.remove(rulesAccepted)
 				lUser.roles.add(rulesDenied)
-				lUser.roles.remove(roleEnglish)
-				lUser.roles.remove(roleGerman)
+				lUser.roles.remove(englishRole)
+				lUser.roles.remove(germanRole)
 			}
 		}
 		if (lUser.roles.cache.has (rulesAccepted)) {
 			if (lBtn === "english") {
-				if(lUser.roles.cache.has (roleEnglish)) {
-					lUser.roles.remove(roleEnglish)
+				if(lUser.roles.cache.has (englishRole)) {
+					lUser.roles.remove(englishRole)
 					changed = 31
 				} else {
-					lUser.roles.add(roleEnglish)
+					lUser.roles.add(englishRole)
 					changed = 3
 				}
 			}
 			if (lBtn === "deutsch") {
-				if (lUser.roles.cache.has (roleGerman)) {
-					lUser.roles.remove(roleGerman)
+				if (lUser.roles.cache.has (germanRole)) {
+					lUser.roles.remove(germanRole)
 					changed = 41
 				} else {
-					lUser.roles.add(roleGerman)
+					lUser.roles.add(germanRole)
 					changed = 4
 				}
 			}
@@ -695,7 +685,6 @@ function CheckRoles (userRole, options = {}) {
 	if (options.targetRole.user.id == ownerRole) return false
 	return userRole.roles.highest.position > options.targetRole.roles.highest.position
 }
-
 // Check if the message contains any forms of links with RegExp
 // Create array with "http:", "https:" and "www."
 // return true if RegExp has found an item from the array
@@ -714,7 +703,6 @@ function CheckMessageForLinks (message) {
 	}
 	return checked
 }
-
 // Create a log message in a certain channel
 // Content = message | type = which channel (channel-ID)
 async function castLog (content, type) {
@@ -749,3 +737,27 @@ async function castLog (content, type) {
 		client.channels.cache.get(channelUserBan).send(content)
 	}
 }
+// This needs to be changed -> work for future me
+function reload () {
+	jsonData = fs.readFileSync ('./Infos/settings.json')
+	channelEN = JSON.parse(jsonData)['channelEN']
+	channelDE = JSON.parse(jsonData)['channelDE']
+	channelLog = JSON.parse(jsonData)['channelLog']
+	channelMsgEdit = JSON.parse(jsonData)['channelMsgEdit']
+	channelUserTimeout = JSON.parse(jsonData)['channelUserTimeout']
+	channelUserBan = JSON.parse(jsonData)['channelUserBan']
+	globalLogging = JSON.parse(jsonData)['globalLogging']
+	loggingFormat = JSON.parse(jsonData)['loggingFormat']
+	editLogging = JSON.parse(jsonData)['editLogging']
+	delLogging = JSON.parse(jsonData)['delLogging']
+	timeoutLogging = JSON.parse(jsonData)['timeoutLogging']
+	banLogging = JSON.parse(jsonData)['banLogging']
+	adminRole = JSON.parse(jsonData)['adminRole']
+	memberRole = JSON.parse(jsonData)['memberRole']
+	rulesAccepted = JSON.parse(jsonData)['rulesAccepted']
+	rulesDenied = JSON.parse(jsonData)['rulesDenied']
+	englishRole = JSON.parse(jsonData)['englishRole']
+	germanRole = JSON.parse(jsonData)['germanRole']
+}
+
+module.exports = { reload }

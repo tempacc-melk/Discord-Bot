@@ -7,10 +7,10 @@
 
 > [!NOTE]
 > Uses:<br />
-> Discord.js v14.21.0<br />
 > node.js v22.18.0 (LTS)<br />
 > nodemon v3.1.9<br />
 > npm v10.9.3<br />
+> Discord.js v14.21.0<br />
 > sequelize v6.37.7<br />
 > sqlite3 v5.1.7<br/>
 
@@ -22,6 +22,7 @@
 1. Download and install Node.js v22.18.0 here: https://nodejs.org/en/download<br />
 2. Start Visual Studio Code -> Select File -> Open Folder -> Select the Bot Folder -> Open Folder<br />
 3. Either type direct into the terminal "node ." or open the Command Prompt in Windows with Ctrl + Shift + C (only works if VSCode is focused) then insert "node ." there and press enter. The second method allows you to close Visual Studio Code after starting the Bot with the basic Command Prompt on Windows.<br />
+   An other option is to open the command prompt directly. Type "cd ..." (to change the directory) in the cmd and then insert the folder location where the bot is located like this -> "cd Desktop/Discord-bot/" without the quotes and execute. Then type "node ." without the quotes and execute again.<br />
 4. Follow the procedures that the bot tells you on launch.<br />
 <br />
 

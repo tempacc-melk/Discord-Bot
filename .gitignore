@@ -1,5 +1,10 @@
 # Custom Files
 **/Assets/*.png
+
 /Infos/settings.json
 /Infos/*.info
 /Infos/*.sqlite
+
+# Temporarily added
+/Games/
+/Games/*.js

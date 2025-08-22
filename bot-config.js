@@ -1,9 +1,8 @@
-const Sequelize = require('sequelize');
-const fs = require('fs');
-const readline = require('readline');
-let dbMissing = false
+const Sequelize = require('sequelize')
+const fs = require('fs')
 // #region Onstart
 function initializeLaunch() {
+    console.clear()
     // Create Assets folder for all images
     if (!fs.existsSync('./Assets')) { 
         console.log("Missing 'Assets' folder")
@@ -23,21 +22,32 @@ function initializeLaunch() {
             "botID": "...", 
             "serverID": "...", 
             "ownerID": "...", 
-            "channel-en-id": "...", 
-            "channel-de-id": "...", 
-            "rules-accepted-role": "...", 
-            "rules-denied-role": "...", 
-            "admin-role-id": "...", 
+            "serverLanguages": {
+                "en": "english",
+                "de": "deutsch"
+            },
+            "channelEN": "...", 
+            "channelDE": "...", 
+            "rulesAccepted": "...", 
+            "rulesDenied": "...", 
+            "adminRole": "...", 
             "moderator-role-id": "...",
             "dev-role-id": "...",
-            "member-role": "...",
-            "en-role": "...",
-            "de-role": "...",
-            "log-channel": "...",
-            "msg-edit-channel": "...",
-            "msg-del-channel": "...",
-            "user-timeout-channel": "...",
-            "user-ban-channel": "..." 
+            "memberRole": "...",
+            "englishRole": "...",
+            "roleGerman": "...",
+            "globalLogging": false,
+            "loggingFormat": "channel",
+            "channelLog": "...",
+            "editLogging": false,
+            "channelMsgEdit": "...",
+            "delLogging": false,
+            "channelMsgDel": "...",
+            "timeoutLogging": false,
+            "channelUserTimeout": "...",
+            "banLogging": false,
+            "channelUserBan": "..." ,
+            "enable-url-filterlist": false
         }
         try {
             const settingsObj = JSON.stringify(settingsFile, null, 2)
@@ -47,22 +57,84 @@ function initializeLaunch() {
             return 0
         }
     }
-    // Check if the database exists
-    if (!fs.existsSync('./Infos/discord_db.sqlite')) {
-        dbMissing = true
-    }
+}
+function normalizeWords(message) {
+    return message.toLowerCase().replace(/[.,\-;:_'"§$%&/?()=]/g, ""); 
 }
 // #endregion
 // #region Detect owner input
-function detectOwnerInput (message) {
-    let output = "I detected your input, nothing happened yet. [wip]"
-    const splitMsg = message.split(' ')
+function detectOwnerInput(message) {
+    const splitMsg = message.toLowerCase().split(' ').map(normalizeWords).filter(Boolean)
+    splitMsg.splice(0, 1)
+    let output = "If you see this message something went wrong."
 
-    output = `You have typed ${splitMsg.length} words -> Analyzing the text...`
-    // ...
+    console.log (`Owner has typed ${splitMsg.length} words (divided by ' ') -> Analyzing the text...`)
+    // List all available known commands
+    const listAllFunction = ["list", "all", "commands"]
+    if (listAllFunction.every(items => splitMsg.includes(items))) {
+        output = "1. Reload Settings \n2. Change global logging VALUE\n3. ..."
+    }
+    //splitMsg.forEach(console.log)
+
+    const refreshSettings = ["reload", "settings"]
+    if (refreshSettings.every(items => splitMsg.includes(items))) {
+        const { reload } = require('./index.js')
+        reload()
+        output = "I reloaded the settings file."
+    }
+    
+    const changeGlobalLogging = ["change", "global", "logging"]
+    if (changeGlobalLogging.every(items => splitMsg.includes(items))) {
+        /* doesn't fully work yet -> needs improvement -> more work for future me
+        const jsonData = fs.readFileSync('./Infos/settings.json')
+        const newData = { "globalLogging": ["true", "1", "enable"].includes(splitMsg) ? true : false }
+        const changeJsonData = jsonData.map(obj => {
+            //obj.globalLogging = obj.globalLogging.replace(newData)
+        })
+        fs.writeFileSync('./Infos/settings.json', JSON.stringify(writeIntoJsonData), 'utf-8')
+        output = "I changed the global logging value."
+        */
+    }
+
     return output
 }
 // #endregion
+// #region Change Settings Parameter
+// Fully untested area
+function adjustSettings (options = {}) {
+    const jsonData = fs.readFileSync ('./Infos/settings.json')
+    if (options != null) {
+        // Language
+
+        // Logging
+        if (options.globalLogging !== null) {
+            jsonData.push({ "globalLogging": Boolean(options.globalLogging) })
+        }
+        if (options.loggingFormat !== null) {
+            jsonData.push({ "loggingFormat": options.loggingFormat === "database" ? "database" : "channel" })
+        }
+        if (options.editLogging !== null) {
+            jsonData.push({ "editLogging": Boolean(options.editLogging) })
+        }
+        if (options.delLogging !== null) {
+            jsonData.push({ "delLogging": Boolean(options.delLogging) })
+        }
+        if (options.timeoutLogging !== null) {
+            jsonData.push({ "timeoutLogging": Boolean(options.timeoutLogging) })
+        }
+        if (options.banLogging !== null) {
+            jsonData.push({ "banLogging": Boolean(options.banLogging) })
+        }
+
+        // Url filterlist
+        if (options.enableUrlfilterlist !== null) {
+            jsonData.push({ "enable-url-filterlist": Boolean(options.enableUrlfilterlist) })
+        }
+    }
+    fs.writeFileSync(jsonData, null, 'utf-8')
+}
+// #endregion
+
 // #region Allowlist Area
 let enableUrlAllowlist = false
 global.enableUrlAllowlist = enableUrlAllowlist
@@ -116,43 +188,12 @@ function removeItemFromUrlAllowlist (getlink) {
 }
 // #endregion
 // #region Database
-async function CheckTheDatabase () {
-    if (dbMissing) {
-        console.log ("Database missing, creating new one...")
-        /*
-        const rl = readline.createInterface(
-            process.stdin,
-            process.stdout
-        )
-
-        rl.question('New username: ', (input) => {
-            // do stuff here...
-            rl.close()
-        })
-        rl.question('New password: ', (input) => {
-            // do stuff here....
-            rl.close()
-        })
-        */
-    }
-    // Create discord_db.sqlite in infos folder
-    const [ getUser, getPass ] = await DatabaseLogin()
-    if (getUser === null || getPass === null) {
-        return console.log ("Invalid login token")
-    }
-    const sequelize = await new Sequelize('discord_db.sqlite', getUser, getPass, {
-        host: 'localhost',
+async function CheckTheDatabase() {
+    const sequelize = await new Sequelize({
         dialect: 'sqlite',
         logging: false,
         storage: './Infos/discord_db.sqlite',
     })
-
-    try {
-        await sequelize.authenticate()
-        console.log("Authentication - ok")
-    } catch (error) {
-        return console.log(`[Authentication error] \n${error}`)
-    }
 
     const dbUsers = sequelize.define('Users', {
         UserID: {
@@ -210,12 +251,8 @@ async function CheckTheDatabase () {
     })
     await dbInteractions.sync()
     
-}
-// #endregion
-// #region Database Login
-async function DatabaseLogin () {
-    // do stuff here...
-    return [ 'user', 'password' ]
+    const getDBdate = new Date()
+    console.log(`DB Loaded: ${getDBdate.toLocaleDateString()} ${getDBdate.toLocaleTimeString()}`)
 }
 // #endregion
 
