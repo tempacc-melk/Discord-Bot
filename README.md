@@ -7,12 +7,16 @@
 
 > [!NOTE]
 > Uses:<br />
-> node.js v22.18.0 (LTS)<br />
+> node.js v20.19.4 (LTS)<br />
+> Discord.js v14.21.0<br />
+> jimp v1.6.0<br />
+> opencv4nodejs v5.6.0<br />
+> opencv4nodejs-prebuilt-install v4.1.209<br />
 > nodemon v3.1.9<br />
 > npm v10.9.3<br />
-> Discord.js v14.21.0<br />
 > sequelize v6.37.7<br />
 > sqlite3 v5.1.7<br/>
+> tesseract.js v6.0.1<br />
 
 <h2>How does this bot work?</h2>
 

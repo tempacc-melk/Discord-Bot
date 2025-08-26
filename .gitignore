@@ -1,10 +1,14 @@
 # Custom Files
-**/Assets/*.png
+*.png
 
 /Infos/settings.json
 /Infos/*.info
 /Infos/*.sqlite
+/Src/Pattern/Icons
+/Src/Pattern/out
+/Src/Pattern/Screenshots
 
 # Temporarily added
 /Games/
 /Games/*.js
+*.traineddata
