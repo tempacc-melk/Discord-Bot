@@ -13,7 +13,7 @@
 > opencv4nodejs v5.6.0<br />
 > opencv4nodejs-prebuilt-install v4.1.209<br />
 > nodemon v3.1.9<br />
-> npm v10.9.3<br />
+> npm v11.5.2<br />
 > sequelize v6.37.7<br />
 > sqlite3 v5.1.7<br/>
 > tesseract.js v6.0.1<br />
@@ -23,7 +23,7 @@
 > [!CAUTION]
 > Follow the procedures below!<br />
 
-1. Download and install Node.js v22.18.0 here: https://nodejs.org/en/download<br />
+1. Download and install Node.js v20.19.4 here: https://nodejs.org/en/download<br />
 2. Start Visual Studio Code -> Select File -> Open Folder -> Select the Bot Folder -> Open Folder<br />
 3. Either type direct into the terminal "node ." or open the Command Prompt in Windows with Ctrl + Shift + C (only works if VSCode is focused) then insert "node ." there and press enter. The second method allows you to close Visual Studio Code after starting the Bot with the basic Command Prompt on Windows.<br />
    An other option is to open the command prompt directly. Type "cd ..." (to change the directory) in the cmd and then insert the folder location where the bot is located like this -> "cd Desktop/Discord-bot/" without the quotes and execute. Then type "node ." without the quotes and execute again.<br />

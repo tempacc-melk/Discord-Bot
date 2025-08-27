@@ -740,6 +740,7 @@ async function castLog (content, type) {
 }
 
 function reload () {
+	cmds()
 	jsonData = fs.readFileSync('./Infos/settings.json', 'utf-8')
 	jsonData = JSON.parse(jsonData)
 
