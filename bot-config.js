@@ -85,15 +85,14 @@ function detectOwnerInput(message) {
     
     const changeGlobalLogging = ["change", "global", "logging"]
     if (changeGlobalLogging.every(items => splitMsg.includes(items))) {
-        /* doesn't fully work yet -> needs improvement -> more work for future me
-        const jsonData = fs.readFileSync('./Infos/settings.json')
-        const newData = { "globalLogging": ["true", "1", "enable"].includes(splitMsg) ? true : false }
-        const changeJsonData = jsonData.map(obj => {
-            //obj.globalLogging = obj.globalLogging.replace(newData)
-        })
-        fs.writeFileSync('./Infos/settings.json', JSON.stringify(writeIntoJsonData), 'utf-8')
-        output = "I changed the global logging value."
-        */
+        let jsonData = fs.readFileSync('./Infos/settings.json', 'utf-8')
+        jsonData = JSON.parse(jsonData)
+        const newData = ["true", "1"].some(items => splitMsg.includes(items)) ? true : false
+        
+        jsonData.globalLogging = newData
+
+        fs.writeFileSync('./Infos/settings.json', JSON.stringify(jsonData, null, 2), 'utf8')
+        output = `I changed the global logging bool to: ${newData}`
     }
 
     return output

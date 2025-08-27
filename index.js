@@ -13,7 +13,7 @@ const client = new Client({
 })
 
 const fs = require('fs')
-let jsonData = fs.readFileSync ('./Infos/settings.json')
+let jsonData = fs.readFileSync ('./Infos/settings.json', 'utf-8')
 const { botToken, botID, ownerRole } = JSON.parse(jsonData)
 let { channelEN, channelDE, channelLog, channelMsgEdit, channelMsgDel, channelUserTimeout, channelUserBan } = JSON.parse(jsonData)
 let { globalLogging, loggingFormat, editLogging, delLogging, timeoutLogging, banLogging } = JSON.parse(jsonData)
@@ -21,6 +21,7 @@ let { adminRole, memberRole, rulesAccepted, rulesDenied, englishRole, germanRole
 const { cmds } = require('./Src/commands.js')
 const { generateEmbed, rulesEmbed } = require('./Src/embeds.js')
 const deletedMsg = new Set()
+jsonData = null
 // =================================================================================================== //
 cmds()
 
@@ -737,27 +738,31 @@ async function castLog (content, type) {
 		client.channels.cache.get(channelUserBan).send(content)
 	}
 }
-// This needs to be changed -> work for future me
+
 function reload () {
-	jsonData = fs.readFileSync ('./Infos/settings.json')
-	channelEN = JSON.parse(jsonData)['channelEN']
-	channelDE = JSON.parse(jsonData)['channelDE']
-	channelLog = JSON.parse(jsonData)['channelLog']
-	channelMsgEdit = JSON.parse(jsonData)['channelMsgEdit']
-	channelUserTimeout = JSON.parse(jsonData)['channelUserTimeout']
-	channelUserBan = JSON.parse(jsonData)['channelUserBan']
-	globalLogging = JSON.parse(jsonData)['globalLogging']
-	loggingFormat = JSON.parse(jsonData)['loggingFormat']
-	editLogging = JSON.parse(jsonData)['editLogging']
-	delLogging = JSON.parse(jsonData)['delLogging']
-	timeoutLogging = JSON.parse(jsonData)['timeoutLogging']
-	banLogging = JSON.parse(jsonData)['banLogging']
-	adminRole = JSON.parse(jsonData)['adminRole']
-	memberRole = JSON.parse(jsonData)['memberRole']
-	rulesAccepted = JSON.parse(jsonData)['rulesAccepted']
-	rulesDenied = JSON.parse(jsonData)['rulesDenied']
-	englishRole = JSON.parse(jsonData)['englishRole']
-	germanRole = JSON.parse(jsonData)['germanRole']
+	jsonData = fs.readFileSync('./Infos/settings.json', 'utf-8')
+	jsonData = JSON.parse(jsonData)
+
+	channelEN = jsonData.channelEN
+	channelDE = jsonData.channelDE
+	channelLog = jsonData.channelLog
+	channelMsgEdit = jsonData.channelMsgEdit
+	channelUserTimeout = jsonData.channelUserTimeout
+	channelUserBan = jsonData.channelUserBan
+	globalLogging = jsonData.globalLogging
+	loggingFormat = jsonData.loggingFormat
+	editLogging = jsonData.editLogging
+	delLogging = jsonData.delLogging
+	timeoutLogging = jsonData.timeoutLogging
+	banLogging = jsonData.banlogging
+	adminRole = jsonData.adminRole
+	memberRole = jsonData.memberRole
+	rulesAccepted = jsonData.rulesAccepted
+	rulesDenied = jsonData.rulesDenied
+	englishRole = jsonData.englishRole
+	germanRole = jsonData.germanRole
+
+	jsonData = null
 }
 
 module.exports = { reload }
