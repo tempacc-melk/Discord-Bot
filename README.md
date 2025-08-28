@@ -27,6 +27,7 @@
 2. Start Visual Studio Code -> Select File -> Open Folder -> Select the Bot Folder -> Open Folder<br />
 3. Either type direct into the terminal "npm start" or open the Command Prompt in Windows with Ctrl + Shift + C (only works if VSCode is focused) then insert "npm start" there and press enter. The second method allows you to close Visual Studio Code after starting the Bot with the basic Command Prompt on Windows.<br />
    An other option is to open the command prompt directly. Type "cd ..." (to change the directory) in the cmd and then insert the folder location where the bot is located like this -> "cd Desktop/Discord-bot/" without the quotes and execute. Then type "npm start" without the quotes and execute again.<br />
+   "npm start" is for dev purposes and "node ." for final production.<br />
 4. Follow the procedures that the bot tells you on launch.<br />
 <br />
 
