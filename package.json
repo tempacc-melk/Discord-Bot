@@ -1,8 +1,11 @@
 {
   "name": "scarlet",
-  "version": "0.6.3",
+  "version": "0.7.0",
   "description": "The mod is checking all messages (write, update & delete) and allows the use of commands.",
   "main": "index.js",
+  "scripts": {
+    "start": "nodemon app.js"
+  },
   "author": "Melina Kotschetkow",
   "license": "ISC",
   "dependencies": {

@@ -2,7 +2,7 @@ const Sequelize = require('sequelize')
 const fs = require('fs')
 // #region Onstart
 function initializeLaunch() {
-    console.clear()
+    console.log("===================================")
     // Create Assets folder for all images
     if (!fs.existsSync('./Assets')) { 
         console.log("Missing 'Assets' folder")
@@ -252,6 +252,8 @@ async function CheckTheDatabase() {
     
     const getDBdate = new Date()
     console.log(`DB Loaded: ${getDBdate.toLocaleDateString()} ${getDBdate.toLocaleTimeString()}`)
+
+    return { dbUsers, dbInteractions }
 }
 // #endregion
 

@@ -7,7 +7,7 @@ const cv = require("opencv4nodejs-prebuilt-install")
 const Tesseract = require("tesseract.js")
 const { Jimp } = require("jimp")
 
-// Test script, needs to be improved a lot
+// Test script, needs to be improved a lot -> yay more work for future me
 async function detectIconAndText() {
     const screenshotPath = "Src/Pattern/Screenshots/image.png"
     const templatePath = "Src/Pattern/Icons/icon.png"

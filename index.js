@@ -22,6 +22,12 @@ const { cmds } = require('./Src/commands.js')
 const { generateEmbed, rulesEmbed } = require('./Src/embeds.js')
 const deletedMsg = new Set()
 jsonData = null
+const { Sequelize } = require('sequelize')
+let dbUsers, dbInteractions = null
+;(async () => { const db = await CheckTheDatabase()
+	dbUsers = db.dbUsers
+	dbInteractions = db.dbInteractions
+})()
 // =================================================================================================== //
 cmds()
 
@@ -30,16 +36,34 @@ client.login(botToken)
 if (client.isReady) {
 	const started = new Date()
 	console.log(`Bot Initialized: ${started.toLocaleDateString()} ${started.toLocaleTimeString()}`)
-	CheckTheDatabase()
 }
 
 // Check if a user joins the server
 client.on(Events.GuildMemberAdd, async (user) => {
 	// Check if the user is in the database
-	// if not add them to it, otherwise ignore
-	const userID = user.id
-	
-	Console.log(`User joined the server: ${userID}`)
+	// if not add them to it, otherwise update the current entry	
+	const newUser = (await dbUsers.findOne({ where: { UserID: user.id }})) === null 
+	? () => {
+		dbUsers.build({ 
+			UserID: user.id, 
+			Username: user.displayName 
+		})
+
+		newUser.save()
+	} 
+	: dbUsers.update({
+		Joined: new Date()
+	}, {
+		where: { UserID: user.id }
+	})
+})
+// Check if a user left the server
+client.on(Events.GuildMemberRemove, async (user) => {
+	const getUser = dbUsers.update({ 
+		Left: new Date() 
+	}, {
+		where: { UserID: user.id }
+	})
 })
 // Check all messages if they contain a link or it starts with '/' guild owners are excluded
 client.on(Events.MessageCreate, async (message) => {
