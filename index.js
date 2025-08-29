@@ -22,9 +22,9 @@ const { cmds } = require('./Src/commands.js')
 const { generateEmbed, rulesEmbed } = require('./Src/embeds.js')
 const deletedMsg = new Set()
 jsonData = null
-const { Sequelize } = require('sequelize')
 let dbUsers, dbInteractions = null
-;(async () => { const db = await CheckTheDatabase()
+;(async () => { 
+	const db = await CheckTheDatabase()
 	dbUsers = db.dbUsers
 	dbInteractions = db.dbInteractions
 })()
@@ -43,23 +43,24 @@ client.on(Events.GuildMemberAdd, async (user) => {
 	// Check if the user is in the database
 	// if not add them to it, otherwise update the current entry	
 	const newUser = (await dbUsers.findOne({ where: { UserID: user.id }})) === null 
-	? () => {
-		dbUsers.build({ 
+	? async () => {
+		await dbUsers.build({ 
 			UserID: user.id, 
-			Username: user.displayName 
+			Username: user.nickname 
 		})
 
-		newUser.save()
+		await newUser.save()
 	} 
-	: dbUsers.update({
-		Joined: new Date()
+	: await dbUsers.update({
+		Joined: new Date(),
+		Left: null
 	}, {
 		where: { UserID: user.id }
 	})
 })
 // Check if a user left the server
 client.on(Events.GuildMemberRemove, async (user) => {
-	const getUser = dbUsers.update({ 
+	const getUser = await dbUsers.update({ 
 		Left: new Date() 
 	}, {
 		where: { UserID: user.id }

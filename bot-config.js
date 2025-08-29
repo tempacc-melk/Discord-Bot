@@ -235,13 +235,6 @@ async function CheckTheDatabase() {
             type: Sequelize.STRING,
             unique: true
         },
-        ModID: {
-            type: Sequelize.STRING,
-            references: {
-                model: 'Users',
-                key: 'UserID'
-            }
-        },
         Interaction: Sequelize.STRING,
         InteractionDate: Sequelize.NOW,
         Reason: Sequelize.STRING
