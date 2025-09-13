@@ -282,9 +282,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				const channel = interaction.client.channels.cache.get(eaID[0])
 				const getMsg = await channel.messages.fetch(eaID[1])
 				const targetMember = await interaction.guild.members.fetch(getMsg.author.id)
-				CheckRoles(getMod, { targetRole: targetMember }) ? null : (async () => {
+				if (!CheckRoles(getMod, { targetRole: targetMember })) {
 					return await reply(interaction, "The message cannot be deleted, you don't have enough permission.", "hidden")
-				})()
+				}
+
 				try {
 					deletedMsg.add(getMsg.id)
 					await getMsg.delete()
@@ -482,7 +483,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
 				lUser.roles.add(memberRole)
 				lUser.roles.add(rulesAccepted)
-				lUser.roles.remove(rulesDenied)
+				if (lUser.roles.cache.has(rulesDenied)) lUser.roles.remove(rulesDenied)
 			}
 		}
 		// Check if the button is "cancel"
@@ -493,10 +494,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
 			} else {
 				changed = interaction.channelId.match(channelEN) ? 2 : 20
 
-				lUser.roles.remove(rulesAccepted)
+				if (lUser.roles.cache.has(rulesAccepted)) lUser.roles.remove(rulesAccepted)
 				lUser.roles.add(rulesDenied)
-				lUser.roles.remove(englishRole)
-				lUser.roles.remove(germanRole)
+				if (lUser.roles.cache.has(englishRole)) lUser.roles.remove(englishRole)
+				if (lUser.roles.cache.has(germanRole)) lUser.roles.remove(germanRole)
 			}
 		}
 		if (lUser.roles.cache.has (rulesAccepted)) {

@@ -35,7 +35,7 @@ function initializeLaunch() {
             "dev-role-id": "...",
             "memberRole": "...",
             "englishRole": "...",
-            "roleGerman": "...",
+            "germanRole": "...",
             "globalLogging": false,
             "loggingFormat": "channel",
             "channelLog": "...",
