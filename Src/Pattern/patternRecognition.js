@@ -20,6 +20,7 @@ async function detectIconAndText() {
     const matched = img.matchTemplate(template, cv.TM_CCOEFF_NORMED)
     const { maxLoc, maxVal } = matched.minMaxLoc()
 
+    // Check if the percentage is lower 40% then stop further code and return no icon found
     if (maxVal < 0.4) {
         return console.log(`Icon not found`)
     }
@@ -28,12 +29,21 @@ async function detectIconAndText() {
     const roiPath = "Src/Pattern/out/roi.png"
     await cv.imwriteAsync(roiPath, roi)
 
-    // Check for a text located area where the icon was found
+    // Check for a text if the icon was found (should be inside the image rect size)
     const jimpImg = await Jimp.read(roiPath)
 
     jimpImg
-        .crop({ x: 0, y: 28,w: 43, h: 15})
-        .resize({ w: jimpImg.bitmap.width * 2, h: jimpImg.bitmap.height * 2, mode: Jimp.RESIZE_BILINEAR })
+        .crop({ 
+            x: 0, 
+            y: 28, 
+            w: 43, 
+            h: 15
+        })
+        .resize({ 
+            w: jimpImg.bitmap.width * 2, 
+            h: jimpImg.bitmap.height * 2, 
+            mode: Jimp.RESIZE_BILINEAR 
+        })
         .contrast(1)
         .greyscale()
         .blur(1)

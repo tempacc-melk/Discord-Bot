@@ -3,7 +3,7 @@ const il = initializeLaunch()
 if (il === 0) {
 	return console.log (`Something went wrong`)
 } else if (il === 1) {
-	return console.log ("Settings.json was successfully created - please insert your values then restart the bot")
+	return console.log ("Settings.json was successfully created - please insert your values into settings.json, then restart the bot.")
 }
 
 const { Client, GatewayIntentBits, Partials, ButtonBuilder, ButtonStyle, ActionRowBuilder, Events, MessageFlags } = require('discord.js')
@@ -29,15 +29,16 @@ let dbUsers, dbInteractions = null
 	dbInteractions = db.dbInteractions
 })()
 // =================================================================================================== //
+// Load all commands into the bot
 cmds()
-
+// Client login with bot token
 client.login(botToken)
-
+// If the client is ready (successfully logged in)
 if (client.isReady) {
 	const started = new Date()
 	console.log(`Bot Initialized: ${started.toLocaleDateString()} ${started.toLocaleTimeString()}`)
 }
-
+// =================================================================================================== //
 // Check if a user joins the server
 client.on(Events.GuildMemberAdd, async (user) => {
 	// Check if the user is in the database
@@ -74,9 +75,7 @@ client.on(Events.MessageCreate, async (message) => {
 	if (getAuthor.id === ownerRole) {
 		if (getMsg.toLowerCase().startsWith('scarlet')) {
 			const botOutput = detectOwnerInput(getMsg)
-			await message.reply({
-				content: botOutput
-			})
+			await reply(message, botOutput, "visible")
 		}
 		return
 	}
@@ -125,7 +124,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
 	if(interaction.isCommand()) {
 		const getMod = interaction.member
 		const lUserChannel = interaction.channel.id
-
 		switch (interaction.commandName) {
 			// Moderator area
 			case "rules":
@@ -166,32 +164,22 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					}
 				}
 
-				await interaction.reply({ content: output })
+				await reply(interaction, output, "visible")
 			break
 			case "slow-mode":
 				const smChannel = await interaction.options.getString("channel")
 				let smDuration = await interaction.options.getInteger("duration")
 				if (globalLogging) await castLog (`${getMod} has used /slow-mode <#${smChannel}>, duration: ${smDuration} (seconds)`, 0)
-				let smOutput = ""
+				const smOutput = smDuration <= 0 ? `Slow-mode disabled in channel: <#${smChannel}>` : `Slow-mode enabled in channel: <#${smChannel}> for ${smDuration} seconds.`;
 				
 				try {
 					await client.channels.cache.get(smChannel).setRateLimitPerUser(smDuration)
 				} catch (error) {
 					const timer = new Date()				
 					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on slow-mode: ${error}`)
-					return await interaction.reply({ 
-						content: "Something went wrong with slow-mode. :frowning2:", 
-						flags: MessageFlags.Ephemeral
-					})
+					return await reply(interaction, "Something went wrong with slow-mode. :frowning2:", "hidden")
 				}
-
-				if (smDuration <= 0) smOutput = `Slow-mode disabled in channel: <#${smChannel}>`
-				else smOutput= `Slow-mode enabled in channel: <#${smChannel}> for ${smDuration} seconds.`
-				
-				await interaction.reply({ 
-					content: smOutput, 
-					flags: MessageFlags.Ephemeral 
-				})
+				await reply(interaction, smOutput, "hidden")
 			break
 			case "purge":
 				if (globalLogging) await castLog (`${getMod} has used /purge in <#${lUserChannel}>`, 0)
@@ -209,114 +197,81 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				} catch (error) {
 					const timer = new Date()
 					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on purge: ${error}`)
-					return await interaction.reply({ 
-						content: "Something went wrong with purge. :frowning2:", 
-						flags: MessageFlags.Ephemeral
-					})
+					return await reply(interaction, "Something went wrong with purge. :frowning2:", "hidden")
 				}
 
-				await interaction.reply({ 
-					content: pOutput, 
-					flags: MessageFlags.Ephemeral
-				})
+				await reply(interaction, pOutput, "hidden")
 			break
 			case "timeout":
 				const tUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
 				if (globalLogging) await castLog (`${getMod} has used /timeout in <#${lUserChannel}> on ${tUser}`, 0)
-				const tcrID = CheckRoles(getMod, { targetRole: tUser })
-				if(!tcrID) {
-					return await interaction.reply({ 
-						content: `You cannot timeout a user with the same or higher position then yours.`, 
-						flags: MessageFlags.Ephemeral 
-					})
-				} else {
-					const lDuration = await interaction.options.getInteger("duration")
-					const lFormat = await interaction.options.getString("format")
-					const lReason = await interaction.options.getString("reason")
-					let calculatedTime = 1000
-					switch (lFormat) {
-						case "days":
-							calculatedTime *= 24
-						case "hour":
-							calculatedTime *= 60
-						case "min":
-							calculatedTime *= 60
-						break
-					}
-					
-					try {
-						await tUser.timeout(calculatedTime, lReason)
-						await tUser.send(`Server: ${interaction.guild.name}\nYou received a timeout for: ${lDuration} ${lFormat}\nReason: ${lReason}`)
-					} catch (error) {
-						const timer = new Date()
-						console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on timeout: ${error}`)
-						return await interaction.reply({ 
-							content: "Something went wrong with timeout. :frowning2:",  
-							flags: MessageFlags.Ephemeral 
-						})
-					}
-					await interaction.reply({ 
-						content: `User has recieved a timeout`, 
-						flags: MessageFlags.Ephemeral 
-					})
-					if (globalLogging) await castLog (`${tUser} received a timeout from ${getMod}\nTime: ${lDuration} ${lFormat}\nReason: ${lReason}`, 3)
+				if (!CheckRoles(getMod, { targetRole: tUser })) {
+					return await reply(interaction, `You cannot timeout a user with the same or higher position then yours.`, "hidden")
 				}
+
+				const lDuration = await interaction.options.getInteger("duration")
+				const lFormat = await interaction.options.getString("format")
+				const lReason = await interaction.options.getString("reason")
+				let calculatedTime = 1000
+				switch (lFormat) {
+					case "days":
+						calculatedTime *= 24
+					case "hour":
+						calculatedTime *= 60
+					case "min":
+						calculatedTime *= 60
+					break
+				}
+				
+				try {
+					await tUser.timeout(calculatedTime)
+					await tUser.send(`Server: ${interaction.guild.name}\nYou received a timeout for: ${lDuration} ${lFormat}\nReason: ${lReason}`)
+				} catch (error) {
+					const timer = new Date()
+					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on timeout: ${error}`)
+					return await reply(interaction, "Something went wrong with timeout. :frowning2:", "hidden")
+				}
+
+				await reply(interaction, `User has recieved a timeout`, "hidden")
+				if (globalLogging) await castLog (`${tUser} received a timeout from ${getMod}\nTime: ${lDuration} ${lFormat}\nReason: ${lReason}`, 3)
 			break
 			case "kick":
 				const kUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
 				if (globalLogging) await castLog (`${getMod} has used /kick on ${kUser}`, 0)
 				const kReason = await interaction.options.getString("reason")
-				const kcrID = CheckRoles(getMod, { targetRole: kUser })
-				if (!kcrID) {
-					return interaction.reply({ 
-						content: "You cannot kick a user with the same or higher position then yours.",
-						flags: MessageFlags.Ephemeral 
-					})
+				if (!CheckRoles(getMod, { targetRole: kUser })) { 
+					return await reply(interaction, "You cannot kick a user with the same or higher position then yours.", "hidden")
 				}
+
 				try {
-					await kUser.send(kUser, `Server: ${interaction.guild.name}\nYou recieved a kick from this server\nReason:${kReason}`)
+					await kUser.send(`Server: ${interaction.guild.name}\nYou recieved a kick from this server\nReason:${kReason}`)
 					await kUser.kick()
 				} catch (error) {
 					const timer = new Date()
 					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on kick: ${error}`)
-					return await interaction.reply({ 
-						content: "Something went wrong with kick. :frowning2:",  
-						flags: MessageFlags.Ephemeral 
-					})				
+					return await reply(interaction, "Something went wrong with kick. :frowning2:", "hidden")
 				}
 				
-				await interaction.reply({ 
-					content: `Kicked user: ${kUser}`, 
-					flags: MessageFlags.Ephemeral 
-				})
+				await reply(interaction, `Kicked user: ${kUser}`, "hidden")
 			break
 			case "ban":
 				const bUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
 				if (globalLogging) await castLog (`${getMod}> has used /ban on ${bUser}`, 0)
 				const bReason = await interaction.options.getString("reason")
-				const bcrID = CheckRoles(getMod, { targetRole: bUser })
-				if (!bcrID) {
-					return interaction.reply({ 
-						content: "You cannot ban a user with the same or higher position then yours.",
-						flags: MessageFlags.Ephemeral 
-					})
+				if (!CheckRoles(getMod, { targetRole: bUser })) {
+					return await reply(interaction, "You cannot ban a user with the same or higher position then yours.", "hidden") 
 				}
+
 				try {
 					await bUser.send(bUser, `Server: ${interaction.guild.name}\nYou received a ban.\nReason: ${bReason}`)
-					await bUser.ban( { reason: bReason })
+					await bUser.ban({ reason: bReason })
 				} catch (error) {
 					const timer = new Date()
 					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on ban: ${error}`)
-					return await interaction.reply({ 
-						content: "Something went wrong with ban. :frowning2:",  
-						flags: MessageFlags.Ephemeral 
-					})
+					return await reply(interaction, "Something went wrong with ban. :frowning2:", "hidden");
 				}
 
-				await interaction.reply({ 
-					content: `Banned user: ${bUser}`, 
-					flags: MessageFlags.Ephemeral 
-				})
+				await reply(interaction, `Banned user: ${bUser}`, "hidden") 
 				if (globalLogging) await castLog (`${bUser} received a ban from ${getMod}\nReason:${bReason}`, 4)
 			break
 			case "delete":
@@ -327,40 +282,26 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				const channel = interaction.client.channels.cache.get(eaID[0])
 				const getMsg = await channel.messages.fetch(eaID[1])
 				const targetMember = await interaction.guild.members.fetch(getMsg.author.id)
-				const dcrID = CheckRoles(getMod, { targetRole: targetMember })
-				if (!dcrID) {
-					return interaction.reply({ 
-						content: "The message cannot be deleted, you don't have enough permission.",
-						flags: MessageFlags.Ephemeral 
-					})
-				}
-
+				CheckRoles(getMod, { targetRole: targetMember }) ? null : (async () => {
+					return await reply(interaction, "The message cannot be deleted, you don't have enough permission.", "hidden")
+				})()
 				try {
 					deletedMsg.add(getMsg.id)
 					await getMsg.delete()
 				} catch (error) {
 					const timer = new Date()				
 					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on delete: ${error}`)
-					return await interaction.reply({ 
-						content: "Something went wrong with delete. :frowning2:", 
-						flags: MessageFlags.Ephemeral 
-					})
+					return await reply(interaction, "Something went wrong with delete. :frowning2:", "hidden")
 				}
 
 				if (globalLogging) await castLog(`${getMod} deleted a message, see below.\n${getMsg.author}\n${getMsg.content}`, 2)
-				await interaction.reply({ 
-					content: "Message has been deleted.", 
-					flags: MessageFlags.Ephemeral 
-				})
+				await reply(interaction, "Message has been deleted.", "hidden")
 			break
 			
 			// Admin area
 			case "rulesbutton":
 				if (!interaction.member.roles.cache.has(adminRole)) {
-					return await interaction.reply({ 
-						content: "Only a admin can use this function.", 
-						flags: MessageFlags.Ephemeral
-					})
+					return await reply (interaction, "Only an admin can use this function.", "hidden");
 				}
 				const rChannel = interaction.options.getString("channel")
 				const lMsg = interaction.options.getString("message")
@@ -396,17 +337,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					components: [row]
 				})
 
-				await interaction.reply({ 
-					content: "Rules buttons have been added", 
-					flags: MessageFlags.Ephemeral
-				})
+				await reply(interaction, "Rules buttons have been added", "hidden")
 			break
 			case "rulesbutton2":
 				if (!interaction.member.roles.cache.has(adminRole)) {
-					return await interaction.reply({ 
-						content: "Only a admin can use this function.", 
-						flags: MessageFlags.Ephemeral
-					})
+					return await reply (interaction, "Only an admin can use this function.", "hidden");
 				}
 				const rChannel2 = interaction.options.getString("channel")
 				const lMsg2 = interaction.options.getString("message")
@@ -433,33 +368,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					components: [row2]
 				})
 
-				await interaction.reply({ 
-					content: "Language buttons have been added", 
-					flags: MessageFlags.Ephemeral
-				})
+				await reply(interaction, "Language buttons have been added", "hidden")
 			break
 			case "requestplayerbutton":
 				if (!interaction.member.roles.cache.has(adminRole)) {
-					return await interaction.reply({ 
-						content: "Only a admin can use this function.", 
-						flags: MessageFlags.Ephemeral
-					})
+					return await reply (interaction, "Only an admin can use this function.", "hidden");
 				}
-
-				await interaction.reply({ 
-					content: "Placeholder", 
-					flags: MessageFlags.Ephemeral
-				})
-
+				await reply(interaction, "reply", "hidden")
 			break
 			case "postmessage":
 				if (!interaction.member.roles.cache.has(adminRole)) {
-					return await interaction.reply({ 
-						content: "Only a admin can use this function.", 
-						flags: MessageFlags.Ephemeral
-					})
+					return await reply (interaction, "Only an admin can use this function.", "hidden");
 				}
-				
 				const pmheadline = await interaction.options.getString("headline")
 				const pmmsg = await interaction.options.getString("message")
 				const pmsendimg = await interaction.options.getString("image")
@@ -473,19 +393,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					embeds: [generateEmbed(pmheadline, pmmsg, pmsendimg, {pmcal, pmstart, pmend})],
 					files: pmfiles
 				})
-				await interaction.reply({ 
-					content: "Message has been written.", 
-					flags: MessageFlags.Ephemeral
-				})
+				await reply (interaction, "Message has been written.", "hidden")
 			break
 			case "postrules":
 				if (!interaction.member.roles.cache.has(adminRole)) {
-					return await interaction.reply({ 
-						content: "Only the admin can use this function.", 
-						flags: MessageFlags.Ephemeral
-					})
+					return await reply (interaction, "Only an admin can use this function.", "hidden");
 				}
-				
 				const prheadline = await interaction.options.getString("headline")
 				const prlanguage = await interaction.options.getString("language")
 				const prfiles = [guildLogo, guildImage]
@@ -494,19 +407,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					embeds: [rulesEmbed(prheadline, prlanguage)],
 					files: prfiles
 				})
-				await interaction.reply({ 
-					content: "Message has been written.", 
-					flags: MessageFlags.Ephemeral
-				})
+				await reply (interaction, "Message has been written.", "hidden")
 			break
 			case "purgeclean":
 				if (!interaction.member.roles.cache.has(adminRole)) {
-					return await interaction.reply({ 
-						content: "Only a admin can use this function.", 
-						flags: MessageFlags.Ephemeral
-					})
+					return await reply (interaction, "Only an admin can use this function.", "hidden");
 				}
-
 				let pcCount = await interaction.options.getInteger("count")
 				let pcOutput = "Empty"
 				try {
@@ -519,49 +425,28 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				} catch (error) {
 					const timer = new Date()
 					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on purgeclean: ${error}`)
-					return await interaction.reply({ 
-						content: "Something went wrong with purgeclean. :frowning2:", 
-						flags: MessageFlags.Ephemeral 
-					})
+					return await reply(interaction, "Something went wrong with purgeclean. :frowning2:", "hidden")
 				}
-				
-				await interaction.reply({ 
-					content: pcOutput, 
-					flags: MessageFlags.Ephemeral 
-				})
+				await reply(interaction, pcOutput, "hidden")
 			break
 			case "botstatus":
 				if (!interaction.member.roles.cache.has(adminRole)) {
-					return await interaction.reply({ 
-						content: "Only a admin can use this function.", 
-						flags: MessageFlags.Ephemeral
-					})
+					return await reply (interaction, "Only an admin can use this function.", "hidden");
 				}
-
 				const bsBot = await interaction.options.getInteger("bot")
 				const bsType = await interaction.options.getString("type")
 
 				if (bsBot === 0) {
 					client.users.cache.get(botID).client.user.setPresence({ status: bsType })
-					await interaction.reply({ 
-						content: `Set status for 'Scarlet'`, 
-						flags: MessageFlags.Ephemeral
-					})
+					await reply (interaction, "Set status for 'Scarlet'", "hidden");
 				} else if (bsBot === 1) {
-					await interaction.reply({ 
-						content: `Set status for 'Nova'`, 
-						flags: MessageFlags.Ephemeral
-					})
+					await reply (interaction, "Set status for 'Nova'", "urgent");
 				}
 			break
 			case "botactivity":
 				if (!interaction.member.roles.cache.has(adminRole)) {
-					return await interaction.reply({ 
-						content: "Only a admin can use this function.", 
-						flags: MessageFlags.Ephemeral
-					})
+					return await reply (interaction, "Only an admin can use this function.", "hidden");
 				}
-
 				const baBot = await interaction.options.getInteger("bot")
 				const baType = await interaction.options.getInteger("type")
 				const baText = await interaction.options.getString("text")
@@ -574,17 +459,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
 						// Assign Custom text
 						client.users.cache.get(botID).client.user.setActivity({ type: baType, name: baText })
 					}
-					await interaction.reply({ 
-						content: `Set activity for 'Scarlet'`, 
-						flags: MessageFlags.Ephemeral
-					})
+					await reply (`Set activity for 'Scarlet'`, "hidden")
 				} else if (baBot === 1) {
-					await interaction.reply({ 
-						content: `Set activity for 'Nova'`, 
-						flags: MessageFlags.Ephemeral
-					})
+					await reply (`Set activity for 'Nova'`, "hidden")
 				}
-
 			break
 		}
     }
@@ -683,11 +561,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				returnMsg = "Sie haben 'Deutsch' als Sprache abgewählt. Der Zugang zu deutschsprachigen Kanälen wird entfernt."
 			break
 		}
-
-		return await interaction.reply ({ 
-			content: returnMsg, 
-			flags: MessageFlags.Ephemeral
-		})
+		return await reply (interaction, returnMsg, "hidden");
 	}
 })
 // Check if a message got a reaction [wip]
@@ -702,13 +576,20 @@ client.on(Events.MessageReactionAdd, async (reaction, user) => {
 	}
 
 })
-
+// =================================================================================================== //
 // Check if the userRole (Moderator) and the targetRole
 // if the userRole is the owner return true
 // if the userRole position is higher then targetRole return false
 function CheckRoles (userRole, options = {}) {
-	if (userRole.user.id === ownerRole) return true
-	if (options.targetRole.user.id == ownerRole) return false
+	if (userRole.user.id === options.targetRole.user.id) {
+		// console.log ("Can't use command on yourself")
+		return false
+	}
+	if (options.targetRole.user.id == ownerRole) {
+		// console.log ("Can't use command on owner of the server")
+		return false
+	}
+	
 	return userRole.roles.highest.position > options.targetRole.roles.highest.position
 }
 // Check if the message contains any forms of links with RegExp
@@ -763,7 +644,22 @@ async function castLog (content, type) {
 		client.channels.cache.get(channelUserBan).send(content)
 	}
 }
+// Writes a custom bot reply depending on the type it can be visible
+// to others or not
+async function reply (object, message, type) {
+	const types = {
+		visible: { flags: 0 },
+		hidden: { flags: MessageFlags.Ephemeral },
+		urgent: { flags: MessageFlags.Urgent }
+	}
+	const config = types[type] || types.hidden
 
+	object.reply({ 
+		content: message,
+		flags: config.flags
+	})
+}
+// Reload all variables from the settings file and adjust
 function reload () {
 	cmds()
 	jsonData = fs.readFileSync('./Infos/settings.json', 'utf-8')
@@ -790,5 +686,5 @@ function reload () {
 
 	jsonData = null
 }
-
+// =================================================================================================== //
 module.exports = { reload }

@@ -53,7 +53,7 @@ function initializeLaunch() {
             const settingsObj = JSON.stringify(settingsFile, null, 2)
             fs.writeFileSync('./Infos/settings.json', settingsObj, 'utf-8')
             return 1
-        } catch (error) {
+        } catch {
             return 0
         }
     }
