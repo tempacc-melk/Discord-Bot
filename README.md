@@ -38,12 +38,20 @@ This is required due to the need of channel, role, user, message IDs**<ins><br /
 
 <h3>Index.js content</h3>
 
-1. MessageCreate<br />
+1. GuildMemberAdd<br />
+Adds a new user to the database if this person has never joined the server. In case this person already has joined the server, overwrite the currently existing entry for this person.
+2. GuildMemberRemove<br />
+...
+3. MessageCreate<br />
 The bot is checking all written messages for links and is deleting those messages the same is for all mistyped '/' commands -> unknown commands are deleted, this includes moderator commands as well<br />
-2. MessageUpdate<br />
+4. MessageUpdate<br />
 The bot checks for updated messages, this means once a message has been updated the previous message are written down in the msg-edited channel<br />
-3. MessageDelete<br />
+5. MessageDelete<br />
 If a message has been deleted the bot is capturing the content and is creating a copy of this message and writes is down in the msg-deleted channel the same goes for the deleteMsg command<br />
+6. InteractionCreate<br />
+...
+7. MessageReactionAdd<br />
+...
 <br />
 
 > [!TIP]
@@ -70,6 +78,7 @@ If a message has been deleted the bot is capturing the content and is creating a
 	  - [x] purgeclean: Cleans a channel from a certain amount of messages. Amount can be between 1 - 999<br />
 	  - [x] botstatus: Changes the bot status to Online, Idle, Busy & Invisible<br />
 	  - [x] botactivity: Gives the bot a custom activity - options are: Playing, Streaming, Listening, Watching, Custom and Competing<br />
+	  - [x] reloadsettings: Get all the parameters from the settings.json and loads them into the bot and then reloads all variables depending those parameters<br />
   
   - Button Interaction<br />
 	- [x] rulesbutton: Assigns the user the role 'rules-accepted-role' on pressing "Accept" or 'rules-denied-role' on "Deny" button
@@ -98,6 +107,7 @@ Below you can see all commands that currently exists and can be used<br />
 - /postrules channel(+) headline(+) language(+)
 - /botstatus bot(+) type(+)
 - /botactivity bot(+) type(+) text(-)
+- /reloadsettings
 
 <h3>Embeds.js content</h3>
 

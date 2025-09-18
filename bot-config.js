@@ -37,7 +37,6 @@ function initializeLaunch() {
             "englishRole": "...",
             "germanRole": "...",
             "globalLogging": false,
-            "loggingFormat": "channel",
             "channelLog": "...",
             "editLogging": false,
             "channelMsgEdit": "...",
@@ -47,7 +46,8 @@ function initializeLaunch() {
             "channelUserTimeout": "...",
             "banLogging": false,
             "channelUserBan": "..." ,
-            "enable-url-filterlist": false
+            "enable-url-filterlist": false,
+            "allowAutoReloadSettings": false
         }
         try {
             const settingsObj = JSON.stringify(settingsFile, null, 2)
@@ -66,71 +66,87 @@ function normalizeWords(message) {
 function detectOwnerInput(message) {
     const splitMsg = message.toLowerCase().split(' ').map(normalizeWords).filter(Boolean)
     splitMsg.splice(0, 1)
+
     let output = "If you see this message something went wrong."
 
+    const { reload } = require('./index.js')
+    let jsonData = fs.readFileSync ('./Infos/settings.json', 'utf-8')
+    jsonData = JSON.parse(jsonData)
+
     console.log (`Owner has typed ${splitMsg.length} words (divided by ' ') -> Analyzing the text...`)
+    const helpMe = ["help"]
+    if (helpMe.every(items => splitMsg.includes(items))) {
+        output = `If you wish to see all commands type: "list all commands", if you wish to know something else, you have to wait for my improvements.\nI'm still lacking multiple additional functions.`
+    }
+
     // List all available known commands
     const listAllFunction = ["list", "all", "commands"]
     if (listAllFunction.every(items => splitMsg.includes(items))) {
-        output = "1. Reload Settings \n2. Change global logging VALUE\n3. ..."
+        output = "Here is a list of all normal chat commands:\n"
+        output += "1. Reload Settings\n"
+        output += "2. Change global logging VALUE\n"
+        output += "3. Change edit logging VALUE\n"
+        //output += "\n4. ..."
+        output += "==========================================\n"
+        output += "Here is a list of all slash commands:\n"
+        output += "1. /rules [language] [number] [point]\n"
+        output += "2. /slow-mode [channel] [duration]\n"
+        output += "3. /timeout [user-id] [duration] [format] [reason]\n"
+        output += "4. /kick [user-id] [reason]\n"
+        output += "5. /delete [msg-id]\n"
+        output += "6. /ban [user-id] [reason]\n"
+        output += "7. /purge [count]\n"
+        output += "8. /purgeclean [count]\n"
+        output += "9. /reloadsettings"
     }
-    //splitMsg.forEach(console.log)
-
+    // Reload all settings
     const refreshSettings = ["reload", "settings"]
     if (refreshSettings.every(items => splitMsg.includes(items))) {
-        const { reload } = require('./index.js')
-        reload()
-        output = "I reloaded the settings file."
+        if (jsonData.allowAutoReloadSettings) {
+            output = "Auto reload settings is enabled, there is no need for manuall reloading."
+        } else {
+            reload()
+            output = "I loaded all variables from the settings files."
+        }
     }
-    
+    // Change the global logging parameter
     const changeGlobalLogging = ["change", "global", "logging"]
     if (changeGlobalLogging.every(items => splitMsg.includes(items))) {
-        let jsonData = fs.readFileSync('./Infos/settings.json', 'utf-8')
-        jsonData = JSON.parse(jsonData)
         const newData = ["true", "1"].some(items => splitMsg.includes(items)) ? true : false
-        
-        jsonData.globalLogging = newData
+        adjustSettings(jsonData, { globalLogging: newData })
 
-        fs.writeFileSync('./Infos/settings.json', JSON.stringify(jsonData, null, 2), 'utf8')
         output = `I changed the global logging bool to: ${newData}`
     }
+    // Change the edit logging parameter
+    const changeEditLogging = ["change", "edit", "logging"]
+    if (changeEditLogging.every(items => splitMsg.includes(items))) {
+        const newData = ["true", "1"].some(items => splitMsg.includes(items)) ? true : false
+        adjustSettings(jsonData, { editLogging: newData })
 
+        output = `I changed the edit logging bool to: ${newData}`
+    }
+
+    if (jsonData.allowAutoReloadSettings) reload()
     return output
 }
 // #endregion
 // #region Change Settings Parameter
-// Fully untested area
-function adjustSettings (options = {}) {
-    const jsonData = fs.readFileSync ('./Infos/settings.json')
-    if (options != null) {
+function adjustSettings (jsonData, options = {}) {
+    if (options !== null) {
         // Language
 
         // Logging
-        if (options.globalLogging !== null) {
-            jsonData.push({ "globalLogging": Boolean(options.globalLogging) })
-        }
-        if (options.loggingFormat !== null) {
-            jsonData.push({ "loggingFormat": options.loggingFormat === "database" ? "database" : "channel" })
-        }
-        if (options.editLogging !== null) {
-            jsonData.push({ "editLogging": Boolean(options.editLogging) })
-        }
-        if (options.delLogging !== null) {
-            jsonData.push({ "delLogging": Boolean(options.delLogging) })
-        }
-        if (options.timeoutLogging !== null) {
-            jsonData.push({ "timeoutLogging": Boolean(options.timeoutLogging) })
-        }
-        if (options.banLogging !== null) {
-            jsonData.push({ "banLogging": Boolean(options.banLogging) })
-        }
-
+        if (options.globalLogging != null) jsonData.globalLogging = options.globalLogging        
+        if (options.editLogging != null) jsonData.editLogging = options.editLogging
+        if (options.delLogging != null) jsonData.delLogging = options.delLogging
+        if (options.timeoutLogging != null) jsonData.timeoutLogging = options.timeoutLogging
+        if (options.banLogging != null) jsonData.banLogging = options.banLogging
+        
         // Url filterlist
-        if (options.enableUrlfilterlist !== null) {
-            jsonData.push({ "enable-url-filterlist": Boolean(options.enableUrlfilterlist) })
-        }
+        if (options.enableUrlfilterlist != null) jsonData.enableUrlfilterlist = options.enableUrlfilterlist
+        
     }
-    fs.writeFileSync(jsonData, null, 'utf-8')
+    fs.writeFileSync('./Infos/settings.json', JSON.stringify(jsonData, null, 2), 'utf-8')
 }
 // #endregion
 
@@ -188,65 +204,94 @@ function removeItemFromUrlAllowlist (getlink) {
 // #endregion
 // #region Database
 async function CheckTheDatabase() {
+	let getdate = new Date()
+	getdate.setHours(getdate.getHours() + 2)
+	getdate = getdate.toISOString().slice(0,19).replace('T',' ')
+
     const sequelize = await new Sequelize({
         dialect: 'sqlite',
         logging: false,
-        storage: './Infos/discord_db.sqlite',
+        storage: './Infos/discord_db.sqlite'
     })
-
     const dbUsers = sequelize.define('Users', {
         UserID: {
-            type: Sequelize.STRING,
+            type: Sequelize.CHAR(30),
             primaryKey: true
         },
-        Username: Sequelize.STRING,
-        RulesAccepted: Sequelize.BOOLEAN,
+        Username: {
+            type: Sequelize.STRING,
+            allowNull: false
+        },
+        RulesAccepted: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: false
+        },
         Lv: {
             type: Sequelize.INTEGER,
+            allowNull: false,
             defaultValue: 0
         },
         Exp: {
             type: Sequelize.INTEGER,
+            allowNull: false,
             defaultValue: 0
         },
         Joined: {
-            type: Sequelize.DATE,
-            defaultValue: Sequelize.NOW
+            type: Sequelize.CHAR(19),
+            allowNull: false
         },
-        Left: Sequelize.DATE,
+        Left: Sequelize.CHAR(19),
     }, {
-        timestamps: false
+        timestamps: false,
     })
     await dbUsers.sync()
-    
+
+    // Add the owner to the user list as the first user
+    let jsonData = fs.readFileSync ('./Infos/settings.json', 'utf-8')
+    jsonData = JSON.parse(jsonData)
+    if (await dbUsers.count() <= 0) {
+        const newUser = await dbUsers.build({
+            UserID: jsonData.ownerID,
+            Username: "Owner",
+            Joined: getdate
+        })
+        await newUser.save()
+    }
+
     const dbInteractions = sequelize.define('Interactions', {
         InteractionID: {
-             type: Sequelize.BIGINT,
-             primaryKey: true
+            type: Sequelize.INTEGER,
+            primaryKey: true,
+            autoIncrement: true
         },
         UserID: {
-            type: Sequelize.STRING,
-            references: {
-                model: 'Users',
-                key: 'UserID'
-            }
+            type: Sequelize.CHAR(30),
         },
         MsgID: {
-            type: Sequelize.STRING,
-            unique: true
+            type: Sequelize.CHAR(30),
+            allowNull: false
         },
-        Interaction: Sequelize.STRING,
-        InteractionDate: Sequelize.NOW,
-        Reason: Sequelize.STRING
+        Interaction: {
+            type: Sequelize.CHAR(70),
+            allowNull: false
+        },
+        Target: Sequelize.CHAR(30),
+        InteractionDate: {
+            type: Sequelize.CHAR(19),
+            allowNull: false
+        },
+        Reason: Sequelize.CHAR
     }, {
         timestamps: false
     })
     await dbInteractions.sync()
     
-    const getDBdate = new Date()
-    console.log(`DB Loaded: ${getDBdate.toLocaleDateString()} ${getDBdate.toLocaleTimeString()}`)
+    console.log(`DB Loaded: ${getdate}`)
 
-    return { dbUsers, dbInteractions }
+    return { 
+        dbUsers, 
+        dbInteractions 
+    }
 }
 // #endregion
 

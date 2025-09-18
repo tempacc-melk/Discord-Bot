@@ -5,7 +5,6 @@ const jsonData = fs.readFileSync ('./Infos/settings.json')
 const { botToken, botID, serverID } = JSON.parse(jsonData)
 // =================================================================== //
 const rest = new REST().setToken(botToken)
-const cmdout = null
 const cmds = async () => {
     try {
         await rest.put(Routes.applicationGuildCommands(botID, serverID), {
@@ -13,18 +12,30 @@ const cmds = async () => {
                 // #region Write with the bot the rules in a channel
                 new SlashCommandBuilder()
                 .setName("rules")
+                .setNameLocalizations({
+                    de: "regeln"
+                })
                 .setDescription("Write a rule in this channel")
-                .addStringOption(option =>
-                    option.setName("language")
-                    .setDescription("Select the language of the rules")
+                .setDescriptionLocalizations({
+                    de: "Schreibe eine Regel in den aktuellen Channel"
+                })
+                .addStringOption(option => option
+                    .setName("language")
+                    .setNameLocalizations({
+                        de: "sprache"
+                    })
+                    .setDescription("Select the language for the output")
+                    .setDescriptionLocalizations({
+                        de: "Wähle eine Sprache für die Ausgabe aus"
+                    })
                     .addChoices(
                         { name: 'english', value: 'en'},
                         { name: 'deutsch', value: 'de'},
                     )
                     .setRequired(true)
                 )
-                .addStringOption(option =>
-                    option.setName("number")
+                .addStringOption(option => option
+                    .setName("number")
                     .setDescription("Selected the main rule (1-4)")
                     .addChoices(
                         { name: '#1', value: '0'},
@@ -35,8 +46,8 @@ const cmds = async () => {
                     )
                     .setRequired(true)
                 )
-                .addStringOption(option =>
-                    option.setName("point")
+                .addStringOption(option => option
+                    .setName("point")
                     .setDescription ("Rule #1: Max 1 | Rule #2: Max 3 | Rule #3-#5: Max 2")
                     .addChoices(
                         { name: '#1', value: '1'},
@@ -50,13 +61,13 @@ const cmds = async () => {
                 new SlashCommandBuilder()
                 .setName("slow-mode")
                 .setDescription("Enable a slow mode in the channel")
-                .addStringOption(option =>
-                    option.setName("channel")
+                .addStringOption(option => option
+                    .setName("channel")
                     .setDescription("In which channel you want to enable slow mode? Post channel id")
                     .setRequired(true)
                 )
-                .addIntegerOption(option =>
-                    option.setName("duration")
+                .addIntegerOption(option => option
+                    .setName("duration")
                     .setDescription("Set the duration of the slow mode (1-3 digits) in seconds (0 is off)")
                     .setMinValue(0)
                     .setMaxValue(999)
@@ -67,20 +78,20 @@ const cmds = async () => {
                 new SlashCommandBuilder()
                 .setName("timeout")
                 .setDescription("Timeout a user from all text and voice channels.")
-                .addStringOption(option => 
-                    option.setName("userid")
+                .addStringOption(option => option
+                    .setName("userid")
                     .setDescription("Username of the person to timeout")
                     .setRequired(true)
                 )
-                .addIntegerOption(option =>
-                    option.setName("duration")
+                .addIntegerOption(option => option
+                    .setName("duration")
                     .setDescription("The duration of the timeout")
                     .setMinValue(1)
                     .setMaxValue(180)
                     .setRequired(true)
                 )
-                .addStringOption(option =>
-                    option.setName("format")
+                .addStringOption(option => option
+                    .setName("format")
                     .setDescription("Decide the format of the duration")
                     .addChoices(
                         { name: 'minutes', value: 'min'},
@@ -89,8 +100,8 @@ const cmds = async () => {
                     )
                     .setRequired(true)
                 )
-                .addStringOption(option =>
-                    option.setName("reason")
+                .addStringOption(option => option
+                    .setName("reason")
                     .setDescription("What was the reason for the timeout")
                     .setRequired(true)
                 ),
@@ -99,13 +110,13 @@ const cmds = async () => {
                 new SlashCommandBuilder()
                 .setName("kick")
                 .setDescription("Kick the user from the server")
-                .addStringOption(option =>
-                    option.setName("userid")
+                .addStringOption(option => option
+                    .setName("userid")
                     .setDescription("Username of the person to be kicked")
                     .setRequired(true)
                 )
-                .addStringOption(option =>
-                    option.setName("reason")
+                .addStringOption(option => option
+                    .setName("reason")
                     .setDescription("Add a reason for the kick")
                     .setRequired(true)
                 ),
@@ -114,8 +125,8 @@ const cmds = async () => {
                 new SlashCommandBuilder()
                 .setName("delete")
                 .setDescription("Delete a specific message from a user")
-                .addStringOption(option =>
-                    option.setName("msgid")
+                .addStringOption(option => option
+                    .setName("msgid")
                     .setDescription("Insert the message id here")
                     .setRequired(true)
                 ),
@@ -124,13 +135,13 @@ const cmds = async () => {
                 new SlashCommandBuilder()
                 .setName("ban")
                 .setDescription("Ban a person from this server")
-                .addStringOption(option =>
-                    option.setName("userid")
+                .addStringOption(option => option
+                    .setName("userid")
                     .setDescription("Insert their user ID here")
                     .setRequired(true)
                 )
-                .addStringOption(option =>
-                    option.setName("reason")
+                .addStringOption(option => option
+                    .setName("reason")
                     .setDescription("What is the reason for banning this person?")
                     .setRequired(true)
                 ),
@@ -139,8 +150,8 @@ const cmds = async () => {
                 new SlashCommandBuilder()
                 .setName("purge")
                 .setDescription("Delete multiple messages in channel")
-                .addIntegerOption(option =>
-                    option.setName("count")
+                .addIntegerOption(option => option
+                    .setName("count")
                     .setDescription("How many messages do you want to delete")
                     .setMinValue(1)
                     .setMaxValue(100)
@@ -151,8 +162,8 @@ const cmds = async () => {
                 new SlashCommandBuilder()
                 .setName("purgeclean")
                 .setDescription("Delete multiple messages in channel with a log")
-                .addIntegerOption(option =>
-                    option.setName("count")
+                .addIntegerOption(option => option
+                    .setName("count")
                     .setDescription("How many messages do you want to delete")
                     .setMinValue(1)
                     .setMaxValue(100)
@@ -165,8 +176,8 @@ const cmds = async () => {
                 new SlashCommandBuilder()
                 .setName("rulesbutton")
                 .setDescription("Add 'accept' and 'deny' button")
-                .addStringOption(option =>
-                    option.setName("channel")
+                .addStringOption(option => option
+                    .setName("channel")
                     .setDescription("Select in which channel you want to add the buttons")
                     .addChoices(
                         { name: "readme", value: "en" },
@@ -174,8 +185,8 @@ const cmds = async () => {
                     )
                     .setRequired(true)
                 )
-                .addStringOption(option =>
-                    option.setName("message")
+                .addStringOption(option => option
+                    .setName("message")
                     .setDescription("Add a bot message to the buttons")
                     .setRequired(true)
                 ),
@@ -184,8 +195,8 @@ const cmds = async () => {
                 new SlashCommandBuilder()
                 .setName("rulesbutton2")
                 .setDescription("Add 'english' and 'deutsch' button")
-                .addStringOption(option =>
-                    option.setName("channel")
+                .addStringOption(option => option
+                    .setName("channel")
                     .setDescription("Select in which channel you want to add the buttons")
                     .addChoices(
                         { name: "readme", value: "en" },
@@ -193,8 +204,8 @@ const cmds = async () => {
                     )
                     .setRequired(true)
                 )
-                .addStringOption(option =>
-                    option.setName("message")
+                .addStringOption(option => option
+                    .setName("message")
                     .setDescription("Add a bot message to the buttons")
                     .setRequired(true)
                 ),
@@ -203,8 +214,8 @@ const cmds = async () => {
                 new SlashCommandBuilder()
                 .setName("requestplayerbutton")
                 .setDescription("Add a request 'Player' role button")
-                .addStringOption(option =>
-                    option.setName("channel")
+                .addStringOption(option => option
+                    .setName("channel")
                     .setDescription("Select in which channel you want to add the button")
                     .addChoices(
                         { name: "Contact-mods", value: "en" },
@@ -217,39 +228,39 @@ const cmds = async () => {
                 new SlashCommandBuilder()
                 .setName("postmessage")
                 .setDescription("Post a message from file")
-                .addStringOption(option =>
-                    option.setName("channel")
+                .addStringOption(option => option
+                    .setName("channel")
                     .setDescription("Select the channel id")
                     .setRequired(true)
                 )
-                .addStringOption(option =>
-                    option.setName("headline")
+                .addStringOption(option => option
+                    .setName("headline")
                     .setDescription("The Headline for the embed message")
                     .setRequired(true)
                 )
-                .addStringOption(option =>
-                    option.setName("message")
+                .addStringOption(option => option
+                    .setName("message")
                     .setDescription("What should the bot write for you")
                     .setRequired(true)
                 )
-                .addStringOption(option =>
-                    option.setName("image")
+                .addStringOption(option => option
+                    .setName("image")
                     .setDescription("Add Image to the embed message")
                     .setRequired(false)
                 )
-                .addBooleanOption(option =>
-                    option.setName("calender")
+                .addBooleanOption(option => option
+                    .setName("calender")
                     .setDescription("Add Calender to the embed message")
                     .setRequired(false)
                 )
-                .addStringOption(option =>
-                    option.setName("startdate")
-                    .setDescription("Set a start time for a event (Insert TIMESTAMP) [wip]")
+                .addStringOption(option => option
+                    .setName("startdate")
+                    .setDescription("Set a start time for a event (Insert TIMESTAMP)")
                     .setRequired(false)
                 )
-                .addStringOption(option =>
-                    option.setName("enddate")
-                    .setDescription("Set a end time for a event( Insert TIMESTAMP) [wip]")
+                .addStringOption(option => option
+                    .setName("enddate")
+                    .setDescription("Set a end time for a event(Insert TIMESTAMP)")
                     .setRequired(false)
                 ),
                 // #endregion
@@ -257,18 +268,18 @@ const cmds = async () => {
                 new SlashCommandBuilder()
                 .setName("postrules")
                 .setDescription("Post a message from file")
-                .addStringOption(option =>
-                    option.setName("channel")
+                .addStringOption(option => option
+                    .setName("channel")
                     .setDescription("Select the channel id")
                     .setRequired(true)
                 )
-                .addStringOption(option =>
-                    option.setName("headline")
+                .addStringOption(option => option
+                    .setName("headline")
                     .setDescription("The Headline for the embed message")
                     .setRequired(true)
                 )
-                .addStringOption(option =>
-                    option.setName("language")
+                .addStringOption(option => option
+                    .setName("language")
                     .setDescription("What should the bot write for you")
                     .addChoices(
                         { name: "English", value: "rules-en.info" },
@@ -281,8 +292,8 @@ const cmds = async () => {
                 new SlashCommandBuilder()
                 .setName("botstatus")
                 .setDescription("Set the status for a bot")
-                .addIntegerOption(option =>
-                    option.setName("bot")
+                .addIntegerOption(option => option
+                    .setName("bot")
                     .setDescription("Select the bot")
                     .addChoices(
                         { name: "Scarlet", value: 0 },
@@ -290,8 +301,8 @@ const cmds = async () => {
                     )
                     .setRequired(true)
                 )
-                .addStringOption(option =>
-                    option.setName("type")
+                .addStringOption(option => option
+                    .setName("type")
                     .setDescription("Select the type")
                     .addChoices(
                         { name: "Online", value: "online" },
@@ -306,8 +317,8 @@ const cmds = async () => {
                 new SlashCommandBuilder()
                 .setName("botactivity")
                 .setDescription("Set the activity for a bot")
-                .addIntegerOption(option =>
-                    option.setName("bot")
+                .addIntegerOption(option => option
+                    .setName("bot")
                     .setDescription("Select the bot")
                     .addChoices(
                         { name: "Scarlet", value: 0 },
@@ -315,8 +326,8 @@ const cmds = async () => {
                     )
                     .setRequired(true)
                 )
-                .addIntegerOption(option =>
-                    option.setName("type")
+                .addIntegerOption(option => option
+                    .setName("type")
                     .setDescription("Set the type")
                     .addChoices(
                         { name: "Playing", value: 0 },
@@ -328,11 +339,16 @@ const cmds = async () => {
                     )
                     .setRequired(true)
                 )
-                .addStringOption(option =>
-                    option.setName("text")
+                .addStringOption(option => option
+                    .setName("text")
                     .setDescription("Insert text here")
                     .setRequired(false)
                 ),
+                // #endregion
+                // #region ReloadSettings
+                new SlashCommandBuilder()
+                .setName("reloadsettings")
+                .setDescription("Reloads all variables from the settings.json into the bot")
                 // #endregion
             ]
         })

@@ -14,20 +14,22 @@ const client = new Client({
 
 const fs = require('fs')
 let jsonData = fs.readFileSync ('./Infos/settings.json', 'utf-8')
-const { botToken, botID, ownerRole } = JSON.parse(jsonData)
+const { botToken, botID, ownerID } = JSON.parse(jsonData)
 let { channelEN, channelDE, channelLog, channelMsgEdit, channelMsgDel, channelUserTimeout, channelUserBan } = JSON.parse(jsonData)
-let { globalLogging, loggingFormat, editLogging, delLogging, timeoutLogging, banLogging } = JSON.parse(jsonData)
+let { globalLogging, editLogging, delLogging, timeoutLogging, banLogging } = JSON.parse(jsonData)
 let { adminRole, memberRole, rulesAccepted, rulesDenied, englishRole, germanRole } = JSON.parse(jsonData)
-const { cmds } = require('./Src/commands.js')
-const { generateEmbed, rulesEmbed } = require('./Src/embeds.js')
-const deletedMsg = new Set()
 jsonData = null
+
 let dbUsers, dbInteractions = null
 ;(async () => { 
 	const db = await CheckTheDatabase()
 	dbUsers = db.dbUsers
 	dbInteractions = db.dbInteractions
 })()
+
+const { cmds } = require('./Src/commands.js')
+const { generateEmbed, rulesEmbed } = require('./Src/embeds.js')
+const deletedMsg = new Set()
 // =================================================================================================== //
 // Load all commands into the bot
 cmds()
@@ -35,15 +37,18 @@ cmds()
 client.login(botToken)
 // If the client is ready (successfully logged in)
 if (client.isReady) {
-	const started = new Date()
-	console.log(`Bot Initialized: ${started.toLocaleDateString()} ${started.toLocaleTimeString()}`)
+	console.log(`Bot Initialized: ${rightnow()}`)
 }
 // =================================================================================================== //
 // Check if a user joins the server
 client.on(Events.GuildMemberAdd, async (user) => {
 	// Check if the user is in the database
 	// if not add them to it, otherwise update the current entry	
-	const newUser = (await dbUsers.findOne({ where: { UserID: user.id }})) === null 
+	const newUser = (await dbUsers.findOne({ 
+		where: { 
+			UserID: user.id 
+		}
+	})) === null 
 	? async () => {
 		await dbUsers.build({ 
 			UserID: user.id, 
@@ -53,18 +58,23 @@ client.on(Events.GuildMemberAdd, async (user) => {
 		await newUser.save()
 	} 
 	: await dbUsers.update({
-		Joined: new Date(),
+		RulesAccepted: false,
+		Joined: rightnow(),
 		Left: null
 	}, {
-		where: { UserID: user.id }
+		where: { 
+			UserID: user.id 
+		}
 	})
 })
 // Check if a user left the server
 client.on(Events.GuildMemberRemove, async (user) => {
-	const getUser = await dbUsers.update({ 
-		Left: new Date() 
+	await dbUsers.update({ 
+		Left: rightnow()
 	}, {
-		where: { UserID: user.id }
+		where: { 
+			UserID: user.id
+		}
 	})
 })
 // Check all messages if they contain a link or it starts with '/' guild owners are excluded
@@ -72,7 +82,7 @@ client.on(Events.MessageCreate, async (message) => {
 	if (message.author.bot) return
 	const getMsg = message.content
 	const getAuthor = await message.guild.members.fetch(message.member)
-	if (getAuthor.id === ownerRole) {
+	if (getAuthor.id === ownerID) {
 		if (getMsg.toLowerCase().startsWith('scarlet')) {
 			const botOutput = detectOwnerInput(getMsg)
 			await reply(message, botOutput, "visible")
@@ -115,8 +125,8 @@ client.on(Events.MessageDelete, async (message) => {
 	if (deletedMsg.has(message.id)) {
 		return deletedMsg.delete(message.id)
 	}
-
-	return await castLog (`<@${botID}> caught a deleted message, see below.\n${msgTarget}\n${getMsg}`, 2)
+	
+	return globalLogging ? await castLog (`<@${botID}> caught a deleted message, see below.\n${msgTarget}\n${getMsg}`, 2) : null
 })
 // Check if a interaction has been created
 client.on(Events.InteractionCreate, async (interaction) => {
@@ -127,7 +137,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
 		switch (interaction.commandName) {
 			// Moderator area
 			case "rules":
-				if (globalLogging) await castLog (`${getMod} has used /rules in <#${lUserChannel}>`, 0)
+				await castLog (`${getMod} has used /rules in <#${lUserChannel}>`, 0, { 
+					userID: getMod.id, 
+					msgID: interaction.id, 
+					interaction: "/rules"
+				})
 
 				const ruleslanguage = await interaction.options.getString("language")
 				const rulesEN = fs.readFileSync('Infos/rules-en.info').toString().split('\n')
@@ -168,50 +182,64 @@ client.on(Events.InteractionCreate, async (interaction) => {
 			break
 			case "slow-mode":
 				const smChannel = await interaction.options.getString("channel")
-				let smDuration = await interaction.options.getInteger("duration")
-				if (globalLogging) await castLog (`${getMod} has used /slow-mode <#${smChannel}>, duration: ${smDuration} (seconds)`, 0)
+				const smDuration = await interaction.options.getInteger("duration")
+				await castLog (`${getMod} has used /slow-mode <#${smChannel}>, duration: ${smDuration} (seconds)`, 0, { 
+					userID: getMod.id,
+					msgID: interaction.id,
+					interaction: `/slow-mode ${smDuration}`,
+					targetID: smChannel
+				})
 				const smOutput = smDuration <= 0 ? `Slow-mode disabled in channel: <#${smChannel}>` : `Slow-mode enabled in channel: <#${smChannel}> for ${smDuration} seconds.`;
 				
 				try {
 					await client.channels.cache.get(smChannel).setRateLimitPerUser(smDuration)
 				} catch (error) {
-					const timer = new Date()				
-					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on slow-mode: ${error}`)
+					console.log (`[${rightnow()}] Error on slow-mode: ${error}`)
 					return await reply(interaction, "Something went wrong with slow-mode. :frowning2:", "hidden")
 				}
 				await reply(interaction, smOutput, "hidden")
 			break
 			case "purge":
-				if (globalLogging) await castLog (`${getMod} has used /purge in <#${lUserChannel}>`, 0)
+				const pCount = await interaction.options.getInteger("count")
+				await castLog (`${getMod} has used /purge in <#${lUserChannel}>`, 0, { 
+					userID: getMod.id,
+					msgID: interaction.id,
+					interaction: `/purge ${pCount}`,
+					targetID: lUserChannel
+				})
 				
-				let pCount = await interaction.options.getInteger("count")
 				let pOutput = "Empty"
-				if (globalLogging) castLog(`${getMod} deleted ${pCount} messages in <#${lUserChannel}>, see below.`, 2)
+				castLog(`${getMod} deleted ${pCount} messages in <#${lUserChannel}>, see below.`, 2)
 				try {
 					const lastMessages = await interaction.channel.messages.fetch({ limit: pCount })
 					lastMessages.forEach(msg => {
-						if (globalLogging) castLog(`${getMod}\n${msg.author}\n${msg.content}`, 2)
+						castLog(`${getMod}\n${msg.author}\n${msg.content}`, 2)
 					 })
 					await interaction.channel.bulkDelete(pCount)
 					pOutput = `Deleted messages: ${pCount}` 
 				} catch (error) {
-					const timer = new Date()
-					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on purge: ${error}`)
+					console.log (`[${rightnow()}] Error on purge: ${error}`)
 					return await reply(interaction, "Something went wrong with purge. :frowning2:", "hidden")
 				}
 
 				await reply(interaction, pOutput, "hidden")
 			break
 			case "timeout":
-				const tUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
-				if (globalLogging) await castLog (`${getMod} has used /timeout in <#${lUserChannel}> on ${tUser}`, 0)
+				const tUserID = await interaction.options.getString("userid")
+				const tUser = await interaction.guild.members.fetch(tUserID)
 				if (!CheckRoles(getMod, { targetRole: tUser })) {
 					return await reply(interaction, `You cannot timeout a user with the same or higher position then yours.`, "hidden")
 				}
-
+				const lReason = await interaction.options.getString("reason")
 				const lDuration = await interaction.options.getInteger("duration")
 				const lFormat = await interaction.options.getString("format")
-				const lReason = await interaction.options.getString("reason")
+				await castLog (`${getMod} has used /timeout in <#${lUserChannel}> on ${tUser}`, 0, {
+					userID: getMod.id,
+					msgID: interaction.id,
+					interaction: `/timeout ${lDuration} ${lFormat}`,
+					targetID: tUserID,
+					reason: lReason
+				})
 				let calculatedTime = 1000
 				switch (lFormat) {
 					case "days":
@@ -227,37 +255,49 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					await tUser.timeout(calculatedTime)
 					await tUser.send(`Server: ${interaction.guild.name}\nYou received a timeout for: ${lDuration} ${lFormat}\nReason: ${lReason}`)
 				} catch (error) {
-					const timer = new Date()
-					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on timeout: ${error}`)
+					console.log (`[${rightnow()}] Error on timeout: ${error}`)
 					return await reply(interaction, "Something went wrong with timeout. :frowning2:", "hidden")
 				}
 
 				await reply(interaction, `User has recieved a timeout`, "hidden")
-				if (globalLogging) await castLog (`${tUser} received a timeout from ${getMod}\nTime: ${lDuration} ${lFormat}\nReason: ${lReason}`, 3)
+				await castLog (`${tUser} received a timeout from ${getMod}\nTime: ${lDuration} ${lFormat}\nReason: ${lReason}`, 3)
 			break
 			case "kick":
-				const kUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
-				if (globalLogging) await castLog (`${getMod} has used /kick on ${kUser}`, 0)
+				const kUserID = await interaction.options.getString("userid")
+				const kUser = await interaction.guild.members.fetch(kUserID)
 				const kReason = await interaction.options.getString("reason")
+				await castLog (`${getMod} has used /kick on ${kUser}`, 0, { 
+					userID: getMod.id, 
+					msgID: interaction.id,
+					interaction: `/kick ${kUserID}`,
+					targetID: kUser.id, 
+					reason: kReason 
+				})
 				if (!CheckRoles(getMod, { targetRole: kUser })) { 
 					return await reply(interaction, "You cannot kick a user with the same or higher position then yours.", "hidden")
 				}
-
+				
 				try {
 					await kUser.send(`Server: ${interaction.guild.name}\nYou recieved a kick from this server\nReason:${kReason}`)
 					await kUser.kick()
 				} catch (error) {
-					const timer = new Date()
-					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on kick: ${error}`)
+					console.log (`[${rightnow()}] Error on kick: ${error}`)
 					return await reply(interaction, "Something went wrong with kick. :frowning2:", "hidden")
 				}
 				
 				await reply(interaction, `Kicked user: ${kUser}`, "hidden")
 			break
 			case "ban":
-				const bUser = await interaction.guild.members.fetch(interaction.options.getString("userid"))
-				if (globalLogging) await castLog (`${getMod}> has used /ban on ${bUser}`, 0)
+				const bUserID = await interaction.options.getString("userid")
+				const bUser = await interaction.guild.members.fetch(bUserID)
 				const bReason = await interaction.options.getString("reason")
+				await castLog (`${getMod}> has used /ban on ${bUser}`, 0, {
+					userID: getMod.id,
+					msgID: interaction.id,
+					interaction: `/ban ${bUserID}`,
+					targteID: bUserID,
+					reason: bReason
+				})
 				if (!CheckRoles(getMod, { targetRole: bUser })) {
 					return await reply(interaction, "You cannot ban a user with the same or higher position then yours.", "hidden") 
 				}
@@ -266,22 +306,25 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					await bUser.send(bUser, `Server: ${interaction.guild.name}\nYou received a ban.\nReason: ${bReason}`)
 					await bUser.ban({ reason: bReason })
 				} catch (error) {
-					const timer = new Date()
-					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on ban: ${error}`)
+					console.log (`[${rightnow()}] Error on ban: ${error}`)
 					return await reply(interaction, "Something went wrong with ban. :frowning2:", "hidden");
 				}
 
 				await reply(interaction, `Banned user: ${bUser}`, "hidden") 
-				if (globalLogging) await castLog (`${bUser} received a ban from ${getMod}\nReason:${bReason}`, 4)
+				await castLog (`${bUser} received a ban from ${getMod}\nReason:${bReason}`, 4)
 			break
 			case "delete":
-				if (globalLogging) await castLog (`${getMod} has used /delete`, 0)
-
 				const getMsgID = await interaction.options.getString("msgid")
 				const eaID = getMsgID.split('-')
 				const channel = interaction.client.channels.cache.get(eaID[0])
 				const getMsg = await channel.messages.fetch(eaID[1])
 				const targetMember = await interaction.guild.members.fetch(getMsg.author.id)
+				await castLog (`${getMod} has used /delete`, 0, {
+					userID: getMod.id,
+					msgID: interaction.id,
+					interaction: `/delete ${getMsgID}`,
+					targetID: getMsg.author.id,
+				})
 				if (!CheckRoles(getMod, { targetRole: targetMember })) {
 					return await reply(interaction, "The message cannot be deleted, you don't have enough permission.", "hidden")
 				}
@@ -290,12 +333,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					deletedMsg.add(getMsg.id)
 					await getMsg.delete()
 				} catch (error) {
-					const timer = new Date()				
-					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on delete: ${error}`)
+					console.log (`[${rightnow()}] Error on delete: ${error}`)
 					return await reply(interaction, "Something went wrong with delete. :frowning2:", "hidden")
 				}
 
-				if (globalLogging) await castLog(`${getMod} deleted a message, see below.\n${getMsg.author}\n${getMsg.content}`, 2)
+				await castLog(`${getMod} deleted a message, see below.\n${getMsg.author}\n${getMsg.content}`, 2)
 				await reply(interaction, "Message has been deleted.", "hidden")
 			break
 			
@@ -391,7 +433,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				if (pmsendimg != null) pmfiles.push(guildImage)
 				
 				await client.channels.cache.get(lUserChannel).send({
-					embeds: [generateEmbed(pmheadline, pmmsg, pmsendimg, {pmcal, pmstart, pmend})],
+					embeds: [generateEmbed(pmheadline, pmmsg, pmsendimg, { pmcal, pmstart, pmend })],
 					files: pmfiles
 				})
 				await reply (interaction, "Message has been written.", "hidden")
@@ -424,8 +466,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					await interaction.channel.bulkDelete(pcCount)
 					pcOutput = `Deleted messages: ${pcCount}` 
 				} catch (error) {
-					const timer = new Date()
-					console.log (`[${timer.toLocaleDateString()} ${timer.toLocaleTimeString()}] Error on purgeclean: ${error}`)
+					console.log (`[${rightnow()}] Error on purgeclean: ${error}`)
 					return await reply(interaction, "Something went wrong with purgeclean. :frowning2:", "hidden")
 				}
 				await reply(interaction, pcOutput, "hidden")
@@ -464,6 +505,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				} else if (baBot === 1) {
 					await reply (`Set activity for 'Nova'`, "hidden")
 				}
+			break
+			case "reloadsettings":
+				if (!interaction.member.roles.cache.has(adminRole)) {
+					return await reply (interaction, "Only an admin can use this function.", "hidden");
+				}
+				reload()
+				await reply(interaction, "Reloaded all settings", "hidden")
 			break
 		}
     }
@@ -586,7 +634,7 @@ function CheckRoles (userRole, options = {}) {
 		// console.log ("Can't use command on yourself")
 		return false
 	}
-	if (options.targetRole.user.id == ownerRole) {
+	if (options.targetRole.user.id === ownerID) {
 		// console.log ("Can't use command on owner of the server")
 		return false
 	}
@@ -613,17 +661,33 @@ function CheckMessageForLinks (message) {
 }
 // Create a log message in a certain channel
 // Content = message | type = which channel (channel-ID)
-async function castLog (content, type) {
+async function castLog (content, type, options = {}) {
 	// 0 cmd-log | Hidden channel -> Only visible to owner
-	if (type === 0) {
-		client.channels.cache.get(channelLog).send(content)
+	if (type === 0 && globalLogging) {
+		if (channelLog === "database") {
+			castDatabaseEntry({
+				userID: options.userID,
+				msgID: options.msgID,
+				interaction: options.interaction,
+				targetID: options.targetID,
+				reason: options.reason
+			})
+		} else if (channelLog !== "database" && channelLog.length > 0) {
+			try {
+				client.channels.cache.get(channelLog).send(content)
+			} catch {
+				console.log ("Err: Can't pos a message because channel is missing.")
+			}
+		} else {
+			console.log ("Err: Can't post a message because channelLog has a invalid id.")
+		}
 	}
 	// 1 msg-edit
-	if (type === 1) {
+	else if (type === 1 && editLogging) {
 		client.channels.cache.get(channelMsgEdit).send(content)
 	}
 	// 2 msg-del
-	if (type === 2) {
+	else if (type === 2 && delLogging) {
 		const msgSplit = content.split('\n')
 		if (msgSplit.length === 1) {
 			client.channels.cache.get(channelMsgDel).send(msgSplit[0])
@@ -637,13 +701,25 @@ async function castLog (content, type) {
 		}
 	}
 	// 3 user-timeout
-	if (type === 3) {
+	else if (type === 3 && timeoutLogging) {
 		client.channels.cache.get(channelUserTimeout).send(content)
 	}
 	// 4 user-ban
-	if (type === 4) {
+	else if (type === 4 && banLogging) {
 		client.channels.cache.get(channelUserBan).send(content)
 	}
+}
+// Creates a database entry for each interaction
+async function castDatabaseEntry (options = {}) {
+	const newInteraction = await dbInteractions.build({
+		UserID: options.userID,
+		MsgID: options.msgID,
+		Interaction: options.interaction,
+		Target: options.targetID ? options.targetID.toString() : null,
+		InteractionDate: rightnow(),
+		Reason: options.reason ? options.reason : null
+	})
+	await newInteraction.save()
 }
 // Writes a custom bot reply depending on the type it can be visible
 // to others or not
@@ -660,6 +736,15 @@ async function reply (object, message, type) {
 		flags: config.flags
 	})
 }
+// Get current Date in this format: YYYY-MM-DD HH:mm:SS
+// Outputs the getdate as a string
+function rightnow () {
+	let getdate = new Date()
+	getdate.setHours(getdate.getHours() + 2)
+	getdate = getdate.toISOString().slice(0,19).replace('T',' ')
+
+	return getdate
+}
 // Reload all variables from the settings file and adjust
 function reload () {
 	cmds()
@@ -673,7 +758,6 @@ function reload () {
 	channelUserTimeout = jsonData.channelUserTimeout
 	channelUserBan = jsonData.channelUserBan
 	globalLogging = jsonData.globalLogging
-	loggingFormat = jsonData.loggingFormat
 	editLogging = jsonData.editLogging
 	delLogging = jsonData.delLogging
 	timeoutLogging = jsonData.timeoutLogging

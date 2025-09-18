@@ -4,6 +4,7 @@
 /Infos/settings.json
 /Infos/*.info
 /Infos/*.sqlite
+/Infos/*
 /Src/Pattern/Icons
 /Src/Pattern/out
 /Src/Pattern/Screenshots

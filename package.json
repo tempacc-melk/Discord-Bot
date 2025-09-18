@@ -1,6 +1,6 @@
 {
   "name": "scarlet",
-  "version": "0.7.2",
+  "version": "0.8.0",
   "description": "The mod is checking all messages (write, update & delete) and allows the use of commands.",
   "main": "index.js",
   "scripts": {
