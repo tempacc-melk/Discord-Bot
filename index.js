@@ -91,12 +91,12 @@ client.on(Events.MessageCreate, async (message) => {
 	}
 
 	if (getMsg.startsWith('/')) {
-		await castLog (`<@${botID}> deleted a message, see below.\n${message.member}\n${getMsg}`, 2)
+		await createLog (`<@${botID}> deleted a message, see below.\n${message.member}\n${getMsg}`, 2)
 		deletedMsg.add(message.id)
 		if (message.content != "Unknown Message") return await message.delete()
 	}
 	if (CheckMessageForLinks (message)) {
-		await castLog (`<@${botID}> deleted a message, see below.\n${message.member}\n${getMsg}`, 2)
+		await createLog (`<@${botID}> deleted a message, see below.\n${message.member}\n${getMsg}`, 2)
 		if (message.content != "Unknown Message") return await message.delete()
 	}
 })
@@ -109,9 +109,9 @@ client.on(Events.MessageUpdate, async (message) => {
 	const newMsg = message.reactions.message.content
 
 	if (!CheckMessageForLinks(newMsg)) {
-		await castLog (`User: ${msgTarget} updated a message, see below.\nOld Message: ${messageCon}`, 1)
+		await createLog (`User: ${msgTarget} updated a message, see below.\nOld Message: ${messageCon}`, 1)
 	} else {
-		await castLog (`<@${botID}> deleted a message, see below.\n${msgTarget}\n${newMsg}`, 2)
+		await createLog (`<@${botID}> deleted a message, see below.\n${msgTarget}\n${newMsg}`, 2)
 		deletedMsg.add(messageID)
 		return await message.delete()
 	}
@@ -126,7 +126,7 @@ client.on(Events.MessageDelete, async (message) => {
 		return deletedMsg.delete(message.id)
 	}
 	
-	return globalLogging ? await castLog (`<@${botID}> caught a deleted message, see below.\n${msgTarget}\n${getMsg}`, 2) : null
+	return globalLogging ? await createLog (`<@${botID}> caught a deleted message, see below.\n${msgTarget}\n${getMsg}`, 2) : null
 })
 // Check if a interaction has been created
 client.on(Events.InteractionCreate, async (interaction) => {
@@ -137,7 +137,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 		switch (interaction.commandName) {
 			// Moderator area
 			case "rules":
-				await castLog (`${getMod} has used /rules in <#${lUserChannel}>`, 0, { 
+				await createLog (`${getMod} has used /rules in <#${lUserChannel}>`, 0, { 
 					userID: getMod.id, 
 					msgID: interaction.id, 
 					interaction: "/rules"
@@ -183,7 +183,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 			case "slow-mode":
 				const smChannel = await interaction.options.getString("channel")
 				const smDuration = await interaction.options.getInteger("duration")
-				await castLog (`${getMod} has used /slow-mode <#${smChannel}>, duration: ${smDuration} (seconds)`, 0, { 
+				await createLog (`${getMod} has used /slow-mode <#${smChannel}>, duration: ${smDuration} (seconds)`, 0, { 
 					userID: getMod.id,
 					msgID: interaction.id,
 					interaction: `/slow-mode ${smDuration}`,
@@ -201,7 +201,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 			break
 			case "purge":
 				const pCount = await interaction.options.getInteger("count")
-				await castLog (`${getMod} has used /purge in <#${lUserChannel}>`, 0, { 
+				await createLog (`${getMod} has used /purge in <#${lUserChannel}>`, 0, { 
 					userID: getMod.id,
 					msgID: interaction.id,
 					interaction: `/purge ${pCount}`,
@@ -209,11 +209,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				})
 				
 				let pOutput = "Empty"
-				castLog(`${getMod} deleted ${pCount} messages in <#${lUserChannel}>, see below.`, 2)
+				await createLog(`${getMod} deleted ${pCount} messages in <#${lUserChannel}>, see below.`, 2)
 				try {
 					const lastMessages = await interaction.channel.messages.fetch({ limit: pCount })
-					lastMessages.forEach(msg => {
-						castLog(`${getMod}\n${msg.author}\n${msg.content}`, 2)
+					lastMessages.forEach(async (msg) => {
+						await createLog(`${getMod}\n${msg.author}\n${msg.content}`, 2)
 					 })
 					await interaction.channel.bulkDelete(pCount)
 					pOutput = `Deleted messages: ${pCount}` 
@@ -233,7 +233,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				const lReason = await interaction.options.getString("reason")
 				const lDuration = await interaction.options.getInteger("duration")
 				const lFormat = await interaction.options.getString("format")
-				await castLog (`${getMod} has used /timeout in <#${lUserChannel}> on ${tUser}`, 0, {
+				await createLog (`${getMod} has used /timeout in <#${lUserChannel}> on ${tUser}`, 0, {
 					userID: getMod.id,
 					msgID: interaction.id,
 					interaction: `/timeout ${lDuration} ${lFormat}`,
@@ -260,13 +260,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				}
 
 				await reply(interaction, `User has recieved a timeout`, "hidden")
-				await castLog (`${tUser} received a timeout from ${getMod}\nTime: ${lDuration} ${lFormat}\nReason: ${lReason}`, 3)
+				await createLog (`${tUser} received a timeout from ${getMod}\nTime: ${lDuration} ${lFormat}\nReason: ${lReason}`, 3)
 			break
 			case "kick":
 				const kUserID = await interaction.options.getString("userid")
 				const kUser = await interaction.guild.members.fetch(kUserID)
 				const kReason = await interaction.options.getString("reason")
-				await castLog (`${getMod} has used /kick on ${kUser}`, 0, { 
+				await createLog (`${getMod} has used /kick on ${kUser}`, 0, { 
 					userID: getMod.id, 
 					msgID: interaction.id,
 					interaction: `/kick ${kUserID}`,
@@ -291,7 +291,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				const bUserID = await interaction.options.getString("userid")
 				const bUser = await interaction.guild.members.fetch(bUserID)
 				const bReason = await interaction.options.getString("reason")
-				await castLog (`${getMod}> has used /ban on ${bUser}`, 0, {
+				await createLog (`${getMod}> has used /ban on ${bUser}`, 0, {
 					userID: getMod.id,
 					msgID: interaction.id,
 					interaction: `/ban ${bUserID}`,
@@ -311,7 +311,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				}
 
 				await reply(interaction, `Banned user: ${bUser}`, "hidden") 
-				await castLog (`${bUser} received a ban from ${getMod}\nReason:${bReason}`, 4)
+				await createLog (`${bUser} received a ban from ${getMod}\nReason:${bReason}`, 4)
 			break
 			case "delete":
 				const getMsgID = await interaction.options.getString("msgid")
@@ -319,7 +319,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				const channel = interaction.client.channels.cache.get(eaID[0])
 				const getMsg = await channel.messages.fetch(eaID[1])
 				const targetMember = await interaction.guild.members.fetch(getMsg.author.id)
-				await castLog (`${getMod} has used /delete`, 0, {
+				await createLog (`${getMod} has used /delete`, 0, {
 					userID: getMod.id,
 					msgID: interaction.id,
 					interaction: `/delete ${getMsgID}`,
@@ -337,7 +337,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					return await reply(interaction, "Something went wrong with delete. :frowning2:", "hidden")
 				}
 
-				await castLog(`${getMod} deleted a message, see below.\n${getMsg.author}\n${getMsg.content}`, 2)
+				await createLog(`${getMod} deleted a message, see below.\n${getMsg.author}\n${getMsg.content}`, 2)
 				await reply(interaction, "Message has been deleted.", "hidden")
 			break
 			
@@ -659,13 +659,13 @@ function CheckMessageForLinks (message) {
 	}
 	return checked
 }
-// Create a log message in a certain channel
+// Create a log message in a certain channel or write into a database
 // Content = message | type = which channel (channel-ID)
-async function castLog (content, type, options = {}) {
+async function createLog (content, type, options = {}) {
 	// 0 cmd-log | Hidden channel -> Only visible to owner
 	if (type === 0 && globalLogging) {
 		if (channelLog === "database") {
-			castDatabaseEntry({
+			await createDatabaseEntry({
 				userID: options.userID,
 				msgID: options.msgID,
 				interaction: options.interaction,
@@ -693,7 +693,6 @@ async function castLog (content, type, options = {}) {
 			client.channels.cache.get(channelMsgDel).send(msgSplit[0])
 		} else if (msgSplit.length > 1) {
 			const pmmsg = `${msgSplit[2]}`
-			//client.channels.cache.get(channelMsgDel).send(msgSplit[0])
 			client.channels.cache.get(channelMsgDel).send({ 
 				embeds: [generateEmbed(null, `${msgSplit[1]}`, global.guildImageDel.name, { pmmsg })],
 				files: [global.guildImageDel]
@@ -710,7 +709,7 @@ async function castLog (content, type, options = {}) {
 	}
 }
 // Creates a database entry for each interaction
-async function castDatabaseEntry (options = {}) {
+async function createDatabaseEntry (options = {}) {
 	const newInteraction = await dbInteractions.build({
 		UserID: options.userID,
 		MsgID: options.msgID,
