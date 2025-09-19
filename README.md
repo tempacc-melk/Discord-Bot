@@ -39,26 +39,22 @@ This is required due to the need of channel, role, user, message IDs**<ins><br /
 <h3>Index.js content</h3>
 
 1. GuildMemberAdd<br />
-Adds a new user to the database if this person has never joined the server. In case this person already has joined the server, overwrite the currently existing entry for this person.
+Adds a new user to the database if this user has never joined the server. In case this user already has joined the server, overwrite the currently existing entry for this user.
 2. GuildMemberRemove<br />
-...
+On leaving the server, look for the member id and add the leave date to the user.
 3. MessageCreate<br />
 The bot is checking all written messages for links and is deleting those messages the same is for all mistyped '/' commands -> unknown commands are deleted, this includes moderator commands as well<br />
 4. MessageUpdate<br />
 The bot checks for updated messages, this means once a message has been updated the previous message are written down in the msg-edited channel<br />
 5. MessageDelete<br />
 If a message has been deleted the bot is capturing the content and is creating a copy of this message and writes is down in the msg-deleted channel the same goes for the deleteMsg command<br />
-6. InteractionCreate<br />
-...
-7. MessageReactionAdd<br />
-...
 <br />
 
 > [!TIP]
 > Upon executing a slash command a log is automatically created in the log channel<br />
 > This is only true for the Moderator Area<br />
 
-4. InteractionCreate
+6. InteractionCreate
   - Command Interaction<br />
     - Moderator Area<br />
 	  - [x] rules: Allows posting each area of the rules with their sub-points<br />
@@ -87,6 +83,9 @@ If a message has been deleted the bot is capturing the content and is creating a
 			Upon using the button a message is generated privately and shows the current status to the person who pressed it<br />
 	- [ ] requestplayerbutton: [wip] The idea behind this button is to request a "player" role that indicates that the person is owning
 			or playing a certain game<br />
+
+7. MessageReactionAdd<br />
+[wip]<br />
 
 <h3>Commands.js content</h3>
 
