@@ -355,71 +355,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				await createLog(`${getMod} deleted a message, see below.\n${getMsg.author}\n${getMsg.content}`, 2)
 				await reply(interaction, "Message has been deleted.", "hidden")
 			break
-			case "reactions":
-				const rrMsgID = await interaction.options.getString("msgid")
-				const rrEachID = rrMsgID.split('-')
-				if (rrEachID.length <= 1) return await reply(interaction, "/Removereactions on mobile isn't currently supported.", "hidden")
-				const rrInteraction = await interaction.options.getInteger("option")
-				const rrChannel = interaction.client.channels.cache.get(rrEachID[0])
-				const rrGetMsg = await rrChannel.messages.fetch(rrEachID[1])
-				
-				await createLog (`${getMod} has used /delete`, 0, {
-					userID: getMod.id,
-					msgID: interaction.id,
-					interaction: `/removereactions ${rrInteraction.name}`,
-					targetID: rrMsgID,
-				})
-				
-				//const removedAuthor = new Set()
-				//removedAuthor.add(rrGetMsg.message.author)
-				switch (rrInteraction) {
-					case 0:
-						// Add to block list
-						if (await dbBlockReactions.findOne({ where: { MsgID: rrEachID[1] } } ) === null) {
-							const newReaction = await dbBlockReactions.build({ 
-								MsgID: rrEachID[1], 
-								Created: rightnow() 
-							})
-							await newReaction.save()
-							await reply(interaction, "Added to the block reaction list.", "hidden")
-						} else {
-							await reply(interaction, "This message is already in the block reaction list.", "hidden")
-						}
-					break
-					case 1:
-						// Remove from block list
-						if (await dbBlockReactions.findOne({ where: { MsgID: rrEachID[1] } } ) !== null) {
-							await dbBlockReactions.destroy({
-								where: {
-									MsgID: rrEachID[1]
-								}
-							})
-							await reply(interaction, "Removed from the block reaction list.", "hidden")
-						} else {
-							await reply(interaction, "This message is not in the block reaction list.", "hidden")
-						}
-					break
-					case 2:
-						// Remove a single reaction from selection
-						// [wip]
-					break
-					case 3:
-						// Remove all reactions
-						rrGetMsg.reactions.removeAll()
-						await reply(interaction, "Reactions have been removed.", "hidden")
-					break
-				}
-				/*	
-				try {
-
-				} catch (error) {
-					console.log (`[${rightnow()}] Error on removereactions: ${error}`)
-					return await reply(interaction, "Something went wrong with removereactions. :frowning2:", "hidden")
-				}
-				*/
-				
-			break
-
+			
 			// Admin area
 			case "rulesbutton":
 				if (!interaction.member.roles.cache.has(adminRole)) {
@@ -601,6 +537,65 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				reload()
 				await reply(interaction, "Reloaded all settings", "hidden")
 			break
+			case "reactions":
+				if (!interaction.member.roles.cache.has(adminRole)) {
+					return await reply (interaction, "Only an admin can use this function.", "hidden");
+				}
+				const rrMsgID = await interaction.options.getString("msgid")
+				const rrEachID = rrMsgID.split('-')
+				if (rrEachID.length <= 1) return await reply(interaction, "/Removereactions on mobile isn't currently supported.", "hidden")
+				const rrInteraction = await interaction.options.getInteger("option")
+				const rrChannel = interaction.client.channels.cache.get(rrEachID[0])
+				const rrGetMsg = await rrChannel.messages.fetch(rrEachID[1])
+				
+				await createLog (`${getMod} has used /delete`, 0, {
+					userID: getMod.id,
+					msgID: interaction.id,
+					interaction: `/removereactions ${rrInteraction.name}`,
+					targetID: rrMsgID,
+				})
+				
+				//const removedAuthor = new Set()
+				//removedAuthor.add(rrGetMsg.message.author)
+				switch (rrInteraction) {
+					case 0:
+						// Add to block list
+						if (await dbBlockReactions.findOne({ where: { MsgID: rrEachID[1] } } ) === null) {
+							const newReaction = await dbBlockReactions.build({ 
+								MsgID: rrEachID[1], 
+								Created: rightnow() 
+							})
+							await newReaction.save()
+							await reply(interaction, "Added to the block reaction list.", "hidden")
+						} else {
+							await reply(interaction, "This message is already in the block reaction list.", "hidden")
+						}
+					break
+					case 1:
+						// Remove from block list
+						if (await dbBlockReactions.findOne({ where: { MsgID: rrEachID[1] } } ) !== null) {
+							await dbBlockReactions.destroy({
+								where: {
+									MsgID: rrEachID[1]
+								}
+							})
+							await reply(interaction, "Removed from the block reaction list.", "hidden")
+						} else {
+							await reply(interaction, "This message is not in the block reaction list.", "hidden")
+						}
+					break
+					case 2:
+						// Remove a single reaction from selection
+						// [wip]
+					break
+					case 3:
+						// Remove all reactions
+						rrGetMsg.reactions.removeAll()
+						await reply(interaction, "Reactions have been removed.", "hidden")
+					break
+				}
+			break
+
 		}
     }
 	// Check if the interaction is a button
@@ -714,8 +709,9 @@ client.on(Events.MessageReactionAdd, async (reaction) => {
 		getReaction = await reaction.fetch()
 	}
 
-	if (await dbBlockReactions.findOne({ where: { MsgID: getReaction.message.id } } ) !== null) {
+	if (await dbBlockReactions.findOne({ where: { MsgID: getReaction.message.id } }) !== null) {
 		getReaction.remove()
+		// can't reply this way (need to look for a workaround)
 		//await reply(message, "Reactions are not allowed for this message.", "hidden")
 	}
 })
