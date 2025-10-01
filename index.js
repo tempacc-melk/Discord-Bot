@@ -3,7 +3,14 @@ const il = initializeLaunch()
 if (il === 0) {
 	return console.log (`Something went wrong`)
 } else if (il === 1) {
-	return console.log ("Settings.json was successfully created - please insert your values into settings.json, then restart the bot.")
+	console.log ("Settings.json was successfully created - Please insert all values into settings.json in /Infos")
+	console.log ("Requires values: ")
+	console.log ("IDs: \nbotToken \nbotID \nserverID \nownerID \n")
+	console.log ("Boolean (true/false): \nglobbalLogging \neditLogging \ndelLogging \ntimeoutLogging \nbanLogging\nallowAutoReloadSettings \n")
+	console.log ("Optional values: ")
+	console.log (`IDs or "database": \nchannelLog \nchannelMsgEdit \nchannelMsgDel \nchannelUserTimeout \nchannelUserBan`)
+	console.log ("Boolean (true/false): \nenable-url-filterlist\n")
+	return console.log ("Once you finished inserting all values, restart your bot.")
 }
 
 const { Client, GatewayIntentBits, Partials, ButtonBuilder, ButtonStyle, ActionRowBuilder, Events, MessageFlags } = require('discord.js')
@@ -14,17 +21,24 @@ const client = new Client({
 
 const fs = require('fs')
 let jsonData = fs.readFileSync ('./Infos/settings.json', 'utf-8')
+// IDs
 const { botToken, botID, ownerID } = JSON.parse(jsonData)
+// Channel IDs
 let { channelEN, channelDE, channelLog, channelMsgEdit, channelMsgDel, channelUserTimeout, channelUserBan } = JSON.parse(jsonData)
+// Logging booleans
 let { globalLogging, editLogging, delLogging, timeoutLogging, banLogging } = JSON.parse(jsonData)
+// Role IDs
 let { adminRole, memberRole, rulesAccepted, rulesDenied, englishRole, germanRole } = JSON.parse(jsonData)
 jsonData = null
 
-let dbUsers, dbInteractions = null
+// DB
+let dbUsers, dbInteractions, dbBotModeration, dbBlockReactions = null
 ;(async () => { 
 	const db = await CheckTheDatabase()
 	dbUsers = db.dbUsers
 	dbInteractions = db.dbInteractions
+	dbBotModeration = db.dbBotModeration
+	dbBlockReactions = db.dbBlockReactions
 })()
 
 const { cmds } = require('./Src/commands.js')
@@ -147,8 +161,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				const rulesEN = fs.readFileSync('Infos/rules-en.info').toString().split('\n')
 				const rulesDE = fs.readFileSync('Infos/rules-de.info').toString().split('\n')
 				
-				const rulesNumber = parseInt(await interaction.options.getString("number"))
-				const rulesPoint = parseInt(await interaction.options.getString("point"))
+				const rulesNumber = await interaction.options.getInteger("number")
+				const rulesPoint = await interaction.options.getInteger("point")
 				const getPointLine = rulesNumber+rulesPoint
 				let output = ""
 				if (ruleslanguage === "en") {
@@ -181,7 +195,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				await reply(interaction, output, "visible")
 			break
 			case "slow-mode":
-				const smChannel = await interaction.options.getString("channel")
+				const smChannel = (await interaction.options.getString("channel") !== null) ? await interaction.options.getString("channel") : lUserChannel
 				const smDuration = await interaction.options.getInteger("duration")
 				await createLog (`${getMod} has used /slow-mode <#${smChannel}>, duration: ${smDuration} (seconds)`, 0, { 
 					userID: getMod.id,
@@ -316,6 +330,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 			case "delete":
 				const getMsgID = await interaction.options.getString("msgid")
 				const eaID = getMsgID.split('-')
+				if (eaID.length <= 1) return await reply(interaction, "/Delete on mobile isn't currently supported.", "hidden")
 				const channel = interaction.client.channels.cache.get(eaID[0])
 				const getMsg = await channel.messages.fetch(eaID[1])
 				const targetMember = await interaction.guild.members.fetch(getMsg.author.id)
@@ -340,7 +355,71 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				await createLog(`${getMod} deleted a message, see below.\n${getMsg.author}\n${getMsg.content}`, 2)
 				await reply(interaction, "Message has been deleted.", "hidden")
 			break
-			
+			case "reactions":
+				const rrMsgID = await interaction.options.getString("msgid")
+				const rrEachID = rrMsgID.split('-')
+				if (rrEachID.length <= 1) return await reply(interaction, "/Removereactions on mobile isn't currently supported.", "hidden")
+				const rrInteraction = await interaction.options.getInteger("option")
+				const rrChannel = interaction.client.channels.cache.get(rrEachID[0])
+				const rrGetMsg = await rrChannel.messages.fetch(rrEachID[1])
+				
+				await createLog (`${getMod} has used /delete`, 0, {
+					userID: getMod.id,
+					msgID: interaction.id,
+					interaction: `/removereactions ${rrInteraction.name}`,
+					targetID: rrMsgID,
+				})
+				
+				//const removedAuthor = new Set()
+				//removedAuthor.add(rrGetMsg.message.author)
+				switch (rrInteraction) {
+					case 0:
+						// Add to block list
+						if (await dbBlockReactions.findOne({ where: { MsgID: rrEachID[1] } } ) === null) {
+							const newReaction = await dbBlockReactions.build({ 
+								MsgID: rrEachID[1], 
+								Created: rightnow() 
+							})
+							await newReaction.save()
+							await reply(interaction, "Added to the block reaction list.", "hidden")
+						} else {
+							await reply(interaction, "This message is already in the block reaction list.", "hidden")
+						}
+					break
+					case 1:
+						// Remove from block list
+						if (await dbBlockReactions.findOne({ where: { MsgID: rrEachID[1] } } ) !== null) {
+							await dbBlockReactions.destroy({
+								where: {
+									MsgID: rrEachID[1]
+								}
+							})
+							await reply(interaction, "Removed from the block reaction list.", "hidden")
+						} else {
+							await reply(interaction, "This message is not in the block reaction list.", "hidden")
+						}
+					break
+					case 2:
+						// Remove a single reaction from selection
+						// [wip]
+					break
+					case 3:
+						// Remove all reactions
+						rrGetMsg.reactions.removeAll()
+						await reply(interaction, "Reactions have been removed.", "hidden")
+					break
+				}
+				/*	
+				try {
+
+				} catch (error) {
+					console.log (`[${rightnow()}] Error on removereactions: ${error}`)
+					return await reply(interaction, "Something went wrong with removereactions. :frowning2:", "hidden")
+				}
+				*/
+				
+			break
+
 			// Admin area
 			case "rulesbutton":
 				if (!interaction.member.roles.cache.has(adminRole)) {
@@ -417,25 +496,34 @@ client.on(Events.InteractionCreate, async (interaction) => {
 				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await reply (interaction, "Only an admin can use this function.", "hidden");
 				}
-				await reply(interaction, "reply", "hidden")
+
+				await reply(interaction, "Placeholder", "hidden")
 			break
 			case "postmessage":
 				if (!interaction.member.roles.cache.has(adminRole)) {
 					return await reply (interaction, "Only an admin can use this function.", "hidden");
 				}
+				const pmnormal = await interaction.options.getSubcommand()
 				const pmheadline = await interaction.options.getString("headline")
 				const pmmsg = await interaction.options.getString("message")
-				const pmsendimg = await interaction.options.getString("image")
 				const pmcal = await interaction.options.getBoolean("calender")
 				const pmstart = await interaction.options.getString("startdate")
 				const pmend = await interaction.options.getString("enddate")
+				const pmsendimg = await interaction.options.getString("image")
+				const pmbr = await interaction.options.getBoolean("blockreaction")
 				const pmfiles = [guildLogo]
-				if (pmsendimg != null) pmfiles.push(guildImage)
+				if (pmsendimg != null) {
+					pmfiles.push(guildImage)
+				}
 				
-				await client.channels.cache.get(lUserChannel).send({
-					embeds: [generateEmbed(pmheadline, pmmsg, pmsendimg, { pmcal, pmstart, pmend })],
-					files: pmfiles
-				})
+				if (pmnormal === "normal") {
+					await client.channels.cache.get(lUserChannel).send(pmmsg)
+				} else {
+					await client.channels.cache.get(lUserChannel).send({
+						embeds: [generateEmbed(pmheadline, pmmsg, pmsendimg, { pmcal, pmstart, pmend, pmbr })],
+						files: pmfiles
+					})
+				}
 				await reply (interaction, "Message has been written.", "hidden")
 			break
 			case "postrules":
@@ -614,16 +702,22 @@ client.on(Events.InteractionCreate, async (interaction) => {
 	}
 })
 // Check if a message got a reaction [wip]
-client.on(Events.MessageReactionAdd, async (reaction, user) => {
-	const isPartial = reaction.partial
-	const getReaction = isPartial ? "Reaction could not be detected" : reaction.fetch()
-
-	if (isPartial) {
-		return console.log(getReaction)
+client.on(Events.MessageReactionAdd, async (reaction) => {
+	let getReaction = null
+	if (reaction.partial) {
+		try {
+			getReaction = await reaction.fetch()
+		} catch {
+			return console.log ("Reaction could not be detected")
+		}
 	} else {
-		console.log (`Reaction from: ${reaction.message.author}`)
+		getReaction = await reaction.fetch()
 	}
 
+	if (await dbBlockReactions.findOne({ where: { MsgID: getReaction.message.id } } ) !== null) {
+		getReaction.remove()
+		//await reply(message, "Reactions are not allowed for this message.", "hidden")
+	}
 })
 // =================================================================================================== //
 // Check if the userRole (Moderator) and the targetRole
@@ -665,7 +759,7 @@ async function createLog (content, type, options = {}) {
 	// 0 cmd-log | Hidden channel -> Only visible to owner
 	if (type === 0 && globalLogging) {
 		if (channelLog === "database") {
-			await createDatabaseEntry({
+			await createDatabaseEntry(1, {
 				userID: options.userID,
 				msgID: options.msgID,
 				interaction: options.interaction,
@@ -709,16 +803,27 @@ async function createLog (content, type, options = {}) {
 	}
 }
 // Creates a database entry for each interaction
-async function createDatabaseEntry (options = {}) {
-	const newInteraction = await dbInteractions.build({
-		UserID: options.userID,
-		MsgID: options.msgID,
-		Interaction: options.interaction,
-		Target: options.targetID ? options.targetID.toString() : null,
-		InteractionDate: rightnow(),
-		Reason: options.reason ? options.reason : null
-	})
-	await newInteraction.save()
+async function createDatabaseEntry (type, options = {}) {
+	if (type === 1) {
+		const newInteraction = await dbInteractions.build({
+			UserID: options.userID,
+			MsgID: options.msgID,
+			Interaction: options.interaction,
+			Target: options.targetID ? options.targetID.toString() : null,
+			InteractionDate: rightnow(),
+			Reason: options.reason ? options.reason : null
+		})
+		await newInteraction.save()
+	} else if (type === 0) {
+		const newBotInteraction = await dbBotModeration.build({
+			MsgID: options.msgID,
+			Interaction: options.interaction,
+			Target: options.targetID ? options.targetID.toString() : null,
+			InteractionDate: rightnow(),
+			Reason: options.reason ? options.reason : null
+		})
+		await newBotInteraction.save()
+	}
 }
 // Writes a custom bot reply depending on the type it can be visible
 // to others or not

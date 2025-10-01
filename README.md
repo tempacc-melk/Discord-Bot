@@ -27,7 +27,7 @@
 2. Start Visual Studio Code -> Select File -> Open Folder -> Select the Bot Folder -> Open Folder<br />
 3. a) Either type direct into the terminal "npm start" or open the Command Prompt in Windows with Ctrl + Shift + C (only works if VSCode is focused) then insert "npm start" there and press enter. The second method allows you to close Visual Studio Code after starting the Bot with the basic Command Prompt.<br />
    b) An other option is to open the command prompt directly. Type "cd ..." (to change the directory) in the cmd and then insert the folder location where the bot is located like this -> "cd Desktop/Discord-bot/" without the quotes and execute. Then type "npm start" without the quotes and execute again.<br />
-   Important: As of now I'm looking into pm2, systemd and docker and decide later which will be better for the production.<br />
+   Important: As of now, I'm looking into pm2, systemd and docker and decide later which will be better for production.<br />
 4. Follow the procedures that the bot tells you on launch.<br />
 <br />
 
@@ -48,12 +48,6 @@ The bot is checking all written messages for links and is deleting those message
 The bot checks for updated messages, this means once a message has been updated the previous message are written down in the msg-edited channel<br />
 5. MessageDelete<br />
 If a message has been deleted the bot is capturing the content and is creating a copy of this message and writes is down in the msg-deleted channel the same goes for the deleteMsg command<br />
-<br />
-
-> [!TIP]
-> Upon executing a slash command a log is automatically created in the log channel<br />
-> This is only true for the Moderator Area<br />
-
 6. InteractionCreate
   - Command Interaction<br />
     - Moderator Area<br />
@@ -69,12 +63,12 @@ If a message has been deleted the bot is capturing the content and is creating a
 	  - [x] rulesbutton: Creates 2 buttons with different text sets, for the english channel "Accept" and "Deny" for the german one "Annehmen" and "Ablehnen"<br />
 	  - [x] rulesbutton2: Creates 2 buttons with different text sets, for the english channel "English" and "German" for the german one "Englisch" and "Deutsch"<br />
 	  - [ ] requestplayerbutton: [wip] ...<br />
-	  - [x] postmessage: Posts a embed messages<br />
+	  - [x] postmessage: Let the bot write a normal or embed message<br />
 	  - [x] postrules: Posts the entire set of rules for the selected language in the channel id<br />
 	  - [x] purgeclean: Cleans a channel from a certain amount of messages. Amount can be between 1 - 999<br />
 	  - [x] botstatus: Changes the bot status to Online, Idle, Busy & Invisible<br />
 	  - [x] botactivity: Gives the bot a custom activity - options are: Playing, Streaming, Listening, Watching, Custom and Competing<br />
-	  - [x] reloadsettings: Get all the parameters from the settings.json and loads them into the bot and then reloads all variables depending those parameters<br />
+	  - [x] reloadsettings: Get all the parameters from the settings.json and loads them into the bot and then reloads all variables depending those parameters. Reloads all commands<br />
   
   - Button Interaction<br />
 	- [x] rulesbutton: Assigns the user the role 'rules-accepted-role' on pressing "Accept" or 'rules-denied-role' on "Deny" button
@@ -92,17 +86,19 @@ If a message has been deleted the bot is capturing the content and is creating a
 Below you can see all commands that currently exists and can be used<br />
 '+' -> required | '-' -> optional<br />
 - /rules language(+) number(+) point(+)
-- /slow-mode channel(+) duration(+)
+- /slow-mode duration(+) channel(-) 
 - /timeout userid(+) duration(+) format(+) reason(+)
 - /kick userid(+) reason(+)
 - /delete msgid(+)
 - /ban userid(+) reason(+)
 - /purge count(+)
 - /purgeclean count(+)
+- /removereactions msgid(+) interaction(-)
 - /rulesbutton channel(+) message(+)
 - /rulesbutton2 channel(+) message(+)
 - /requestplayerbutton channel(+)
-- /postmessage channel(+) headline(+) message(+) image(-) calender(-) startdate(-) enddate(-)
+- /postmessage	a) normal channel(+) message(+) image(-) blockreactions(-) 
+				b) embed: channel(+) healdine(+) message(+) calender(-) startdate(-) enddate(-) image(-) blockreactions(-) 
 - /postrules channel(+) headline(+) language(+)
 - /botstatus bot(+) type(+)
 - /botactivity bot(+) type(+) text(-)
@@ -110,21 +106,23 @@ Below you can see all commands that currently exists and can be used<br />
 
 <h3>Embeds.js content</h3>
 
-1. GenerateEmbed: [wip] This allows posting a embed message, depending on what parameters are passed on and the embed message formatted accordingly<br />
+1. GenerateEmbed: This allows posting a embed message, depending on what parameters are passed on and the embed message formatted accordingly<br />
 2. RulesEmbed: This is posting the entirety of the rules depending on which language has been selected<br />
 
 <h3>Bot-config.js content</h3>
 
 1. InitializeLaunch: This function runs on the start and checks if all the basic folder and files are existing if not they will be created<br />
-2. DetectOwnerInput: This function is for the Bot configuration without any commands [wip]<br />
-3. ChangeAllowlistStatus: Change the Allowlist status from allowed to denied and which site is added or removed from the list<br />
-4. AddItemToAllowlist: Adds a item to the Allowlist<br />
-5. RemoveItemFromAllowlist: Removes a item from the Allowlist<br />
+2. DetectOwnerInput: This function is for the Bot configuration without any commands<br />
+3. AdjustSettings: Variables will be changed from the settings.json file.<br />
+4. ChangeAllowlistStatus: Change the Allowlist status from allowed to denied and which site is added or removed from the list<br />
+5. AddItemToAllowlist: Adds a item to the Allowlist<br />
+6. RemoveItemFromAllowlist: Removes a item from the Allowlist<br />
+7. CheckTheDatabase: Creates a sqlite3 database with multiple tables<br />
 <br />
 
 <h2>Future plans</h2>
 
-1. My future plans is the create a enviroment where the person launching this bot can configurate it via writing in a channel or with commands.
+1. [Works to a certain degree|wip] My future plans is the create a enviroment where the person launching this bot can configurate it via writing in a channel or with commands.
    To be more precise - the owner should be allowed to configurate all settings without having coding knowledge.<br />
    There are mulitple options on how to handle it.<br />
    - With Commands: This means all configuration will be handled with commands<br />

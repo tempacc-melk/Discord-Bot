@@ -55,7 +55,6 @@ function rulesEmbed (stitle, language) {
             { name: `${rules[15]}`, value: `${rules[16]}${rules[17]}${rules[18]}`, inline: false },
             { name: `${rules[19]}`, value: `${rules[20]}${rules[21]}${rules[22]}`, inline: false },
             { name: `${rules[23]}`, value: `${rules[24]}${rules[25]}`, inline: false },
-
         )
         .setImage(`attachment://${guildImage.name}`)
         .setTimestamp()

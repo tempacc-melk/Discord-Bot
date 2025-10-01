@@ -64,7 +64,7 @@ function normalizeWords(message) {
 // #endregion
 // #region Detect owner input
 function detectOwnerInput(message) {
-    const splitMsg = message.toLowerCase().split(' ').map(normalizeWords).filter(Boolean)
+    const splitMsg = message.split(' ').map(normalizeWords).filter(Boolean)
     splitMsg.splice(0, 1)
 
     let output = "If you see this message something went wrong."
@@ -257,6 +257,7 @@ async function CheckTheDatabase() {
         })
         await newUser.save()
     }
+    jsonData = null
 
     const dbInteractions = sequelize.define('Interactions', {
         InteractionID: {
@@ -285,12 +286,54 @@ async function CheckTheDatabase() {
         timestamps: false
     })
     await dbInteractions.sync()
+
+    const dbBotModeration = sequelize.define('AutoModeration', {
+        ModerationID: {
+            type: Sequelize.INTEGER,
+            primaryKey: true,
+            autoIncrement: true
+        },
+        MsgID: {
+            type: Sequelize.CHAR(30),
+            allowNull: false
+        },
+        Interaction: Sequelize.CHAR,
+        Target: {
+            type: Sequelize.CHAR(30),
+            references: {
+                model: 'Users',
+                key: 'UserID'
+            }
+        },
+        InteractionDate: {
+            type: Sequelize.CHAR(19),
+            allowNull: false
+        },
+        Reason: Sequelize.CHAR
+    }, {
+        timestamps: false
+    })
+    await dbBotModeration.sync()
+
+    const dbBlockReactions = sequelize.define('BlockReactionMessages', {
+        MsgID: {
+            type: Sequelize.CHAR(30),
+            primaryKey: true,
+            allowNull: false
+        },
+        Created: Sequelize.CHAR(19)
+    }, {
+        timestamps: false
+    })
+    await dbBlockReactions.sync()
     
     console.log(`DB Loaded: ${getdate}`)
 
     return { 
         dbUsers, 
-        dbInteractions 
+        dbInteractions,
+        dbBotModeration,
+        dbBlockReactions
     }
 }
 // #endregion
